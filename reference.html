@@ -1,0 +1,562 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заявки на справки</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            padding: 30px 20px 20px 20px;
+            background: #f8f9ff;
+        }
+
+        .pattern-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+            background: radial-gradient(circle at 20% 80%, rgba(106, 90, 205, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.15) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(147, 112, 219, 0.1) 0%, transparent 50%), linear-gradient(45deg, transparent 48%, rgba(106, 90, 205, 0.03) 48%, rgba(106, 90, 205, 0.03) 52%, transparent 52%), linear-gradient(-45deg, transparent 48%, rgba(138, 43, 226, 0.03) 48%, rgba(138, 43, 226, 0.03) 52%, transparent 52%);
+            background-size: 60px 60px;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 95%;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            height: 80px;
+        }
+
+        .back-button {
+            background: rgba(106, 90, 205, 0.9);
+            color: white;
+            border: 2px solid #6A5ACD;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(106, 90, 205, 0.3);
+        }
+
+        .back-button:hover {
+            background: rgba(106, 90, 205, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(106, 90, 205, 0.4);
+        }
+
+        .title-container {
+            background: #6f53d0;
+            border-radius: 12px;
+            padding: 15px 30px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.3);
+            border: 2px solid #6350c0;
+            flex-grow: 0;
+            margin: 0 20px;
+            width: auto;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 0;
+        }
+
+        .request-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 10px;
+            box-shadow: 0 10px 30px rgba(111, 83, 208, 0.15);
+            border: 2px solid rgba(111, 83, 208, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .request-title {
+            text-align: center;
+            color: #6f53d0;
+            margin-bottom: 25px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .request-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #6f53d0;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            padding: 12px 15px;
+            border: 2px solid rgba(111, 83, 208, 0.2);
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #6f53d0;
+            box-shadow: 0 0 0 3px rgba(111, 83, 208, 0.2);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #6f53d0, #8a2be2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.3);
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(111, 83, 208, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .success-message {
+            background: rgba(46, 204, 113, 0.1);
+            border: 2px solid #2ecc71;
+            color: #27ae60;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+
+        .requests-history {
+            margin-top: 40px;
+        }
+
+        .history-title {
+            text-align: center;
+            color: #6f53d0;
+            margin-bottom: 20px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .request-item {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.1);
+            border: 2px solid rgba(111, 83, 208, 0.05);
+            backdrop-filter: blur(5px);
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .request-type {
+            font-weight: 600;
+            color: #6f53d0;
+            font-size: 18px;
+        }
+
+        .request-date {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .request-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .status-pending {
+            background: rgba(241, 196, 15, 0.2);
+            color: #f39c12;
+        }
+
+        .status-approved {
+            background: rgba(46, 204, 113, 0.2);
+            color: #27ae60;
+        }
+
+        .status-rejected {
+            background: rgba(231, 76, 60, 0.2);
+            color: #c0392b;
+        }
+
+        .floating-element {
+            position: absolute;
+            z-index: 0;
+            animation: float 8s ease-in-out infinite;
+            border-radius: 50%;
+            opacity: 0.7;
+            filter: blur(1px);
+        }
+
+        .floating-1 {
+            top: 15%;
+            left: 8%;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
+            border-radius: 20px;
+            opacity: 0.8;
+            filter: blur(0.5px);
+        }
+
+        .floating-2 {
+            bottom: 25%;
+            right: 10%;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            border-radius: 50%;
+            opacity: 0.7;
+            filter: blur(0.5px);
+            animation-delay: -2s;
+        }
+
+        .floating-3 {
+            top: 60%;
+            left: 12%;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            border-radius: 10px;
+            opacity: 0.6;
+            filter: blur(0.5px);
+            animation-delay: -4s;
+        }
+
+        @media (max-width: 768px) {
+            .floating-element {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 25px 15px 15px 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                height: auto;
+                gap: 15px;
+            }
+
+            .title {
+                font-size: 28px;
+            }
+
+            .request-container {
+                padding: 20px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 20px 10px 10px 10px;
+            }
+
+            .title {
+                font-size: 24px;
+            }
+
+            .request-title {
+                font-size: 20px;
+            }
+
+            .request-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Плавающие элементы фона -->
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+    <div class="pattern-bg"></div>
+
+    <div class="container">
+        <div class="header">
+            <a href='main.html' class="back-button">← Назад</a>
+            <div class="title-container">
+                <h1 class="title">Заявки на справки</h1>
+            </div>
+            <div style="width: 100px;"></div>
+        </div>
+
+        <div class="request-container">
+            <h2 class="request-title">Подать заявку на справку</h2>
+
+            <form class="request-form" id="requestForm">
+                <div class="form-group">
+                    <label for="fullName" class="form-label">ФИО</label>
+                    <input type="text" id="fullName" class="form-input" placeholder="Введите ваше полное имя" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="faculty" class="form-label">Факультет</label>
+                    <input type="text" id="faculty" class="form-input" placeholder="Введите название факультета"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="certificateType" class="form-label">Тип справки</label>
+                    <select id="certificateType" class="form-select" required>
+                        <option value="" disabled selected>Выберите тип справки</option>
+                        <option value="simple">Справка с места обучения (простая)</option>
+                        <option value="full">Справка с места обучения (полная)</option>
+                        <option value="call">Справка-вызов</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="purposeGroup" style="display: none;">
+                    <label for="purpose" class="form-label">Цель получения справки</label>
+                    <textarea id="purpose" class="form-textarea"
+                        placeholder="Опишите, для чего вам нужна справка"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="contact" class="form-label">Контактные данные</label>
+                    <input type="text" id="contact" class="form-input" placeholder="Телефон или email для связи"
+                        required>
+                </div>
+
+                <button type="submit" class="submit-btn">Подать заявку</button>
+
+                <div class="success-message" id="successMessage">
+                    Ваша заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.
+                </div>
+            </form>
+        </div>
+
+        <div class="requests-history">
+            <h2 class="history-title">История ваших заявок</h2>
+            <div class="history-list" id="historyList">
+
+                <div class="empty-history" id="emptyHistory"
+                    style="text-align: center; color: #6f53d0; font-style: italic; padding: 40px 20px;">
+                    У вас пока нет отправленных заявок
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const requestForm = document.getElementById('requestForm');
+            const successMessage = document.getElementById('successMessage');
+            const historyList = document.getElementById('historyList');
+            const emptyHistory = document.getElementById('emptyHistory');
+            const certificateType = document.getElementById('certificateType');
+            const purposeGroup = document.getElementById('purposeGroup');
+            const purpose = document.getElementById('purpose');
+
+            certificateType.addEventListener('change', function () {
+                if (this.value === 'full') {
+                    purposeGroup.style.display = 'flex';
+                    purpose.setAttribute('required', 'required');
+                } else {
+                    purposeGroup.style.display = 'none';
+                    purpose.removeAttribute('required');
+                    purpose.value = '';
+                }
+            });
+
+
+            loadRequestHistory();
+
+
+            requestForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+
+                const formData = {
+                    fullName: document.getElementById('fullName').value,
+                    faculty: document.getElementById('faculty').value,
+                    certificateType: document.getElementById('certificateType').value,
+                    purpose: document.getElementById('purpose').value,
+                    contact: document.getElementById('contact').value,
+                    date: new Date().toLocaleDateString('ru-RU'),
+                    status: 'pending'
+                };
+
+                saveRequest(formData);
+
+
+                successMessage.style.display = 'block';
+
+                requestForm.reset();
+                purposeGroup.style.display = 'none';
+
+
+                loadRequestHistory();
+
+
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 5000);
+            });
+
+            function saveRequest(requestData) {
+                let requests = JSON.parse(localStorage.getItem('certificateRequests')) || [];
+                requests.push(requestData);
+                localStorage.setItem('certificateRequests', JSON.stringify(requests));
+            }
+
+            function loadRequestHistory() {
+                const requests = JSON.parse(localStorage.getItem('certificateRequests')) || [];
+
+                if (requests.length === 0) {
+                    emptyHistory.style.display = 'block';
+                    return;
+                }
+
+                emptyHistory.style.display = 'none';
+
+                historyList.innerHTML = '';
+
+                requests.reverse().forEach(request => {
+                    const requestItem = document.createElement('div');
+                    requestItem.className = 'request-item';
+
+                    let certificateTypeText = '';
+                    switch (request.certificateType) {
+                        case 'simple':
+                            certificateTypeText = 'Справка с места обучения (простая)';
+                            break;
+                        case 'full':
+                            certificateTypeText = 'Справка с места обучения (полная)';
+                            break;
+                        case 'call':
+                            certificateTypeText = 'Справка-вызов';
+                            break;
+                    }
+
+                    let statusClass = '';
+                    let statusText = '';
+                    switch (request.status) {
+                        case 'pending':
+                            statusClass = 'status-pending';
+                            statusText = 'На рассмотрении';
+                            break;
+                        case 'approved':
+                            statusClass = 'status-approved';
+                            statusText = 'Одобрена';
+                            break;
+                        case 'rejected':
+                            statusClass = 'status-rejected';
+                            statusText = 'Отклонена';
+                            break;
+                    }
+
+                    requestItem.innerHTML = `
+                        <div class="request-header">
+                            <div class="request-type">${certificateTypeText}</div>
+                            <div class="request-date">${request.date}</div>
+                        </div>
+                        <div><strong>Факультет:</strong> ${request.faculty}</div>
+                        ${request.purpose ? `<div><strong>Цель:</strong> ${request.purpose}</div>` : ''}
+                        <div class="request-status ${statusClass}">${statusText}</div>
+                    `;
+
+                    historyList.appendChild(requestItem);
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
