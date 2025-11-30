@@ -1,16 +1,17 @@
 {
-  "name": "sudu-project",
+  "name": "personal_account_sudu",
   "version": "1.0.0",
-  "description": "Website with Telegram password reset",
+  "description": "Website with Telegram Bot",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",  
+    "bot": "node bot.js"  
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^8.6.0",
-    "express": "^4.21.2",
-    "node-fetch": "^2.7.0",
-    "pg": "^8.16.3"
+    "express": "^4.17.1",
+    "pg": "^8.7.1",
+    "telegraf": "^4.0.0",  
+    "node-fetch": "^2.6.1",
+    "cors": "^2.8.5"
   }
 }
