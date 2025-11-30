@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3'); // ← только better-sqlite3
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
@@ -33,38 +33,33 @@ const emailTransporter = nodemailer.createTransport({
 });
 
 // ==================== БАЗА ДАННЫХ ====================
-const dbPath = path.join(__dirname, 'sudu_database.sqlite');
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('❌ Ошибка подключения к SQLite:', err.message);
-    } else {
-        console.log('✅ Подключение к SQLite установлено');
-        initializeDatabase();
-    }
-});
+const db = new Database('sudu_database.sqlite');
 
+// Инициализация базы данных
 function initializeDatabase() {
-    // Таблица пользователей
-    db.run(`
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            email_verified BOOLEAN DEFAULT FALSE,
-            verification_token TEXT NULL,
-            reset_token TEXT NULL,
-            reset_token_expires DATETIME NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    `, (err) => {
-        if (err) {
-            console.error('❌ Ошибка создания таблицы users:', err);
-        } else {
-            console.log('✅ Таблица users готова');
-        }
-    });
+    try {
+        // Таблица пользователей
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                email_verified BOOLEAN DEFAULT FALSE,
+                verification_token TEXT NULL,
+                reset_token TEXT NULL,
+                reset_token_expires DATETIME NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('✅ Таблица users готова');
+    } catch (err) {
+        console.error('❌ Ошибка создания таблицы users:', err);
+    }
 }
+
+// Инициализируем базу при запуске
+initializeDatabase();
 
 // ==================== EMAIL ФУНКЦИИ ====================
 async function sendVerificationEmail(email, verificationToken) {
@@ -140,43 +135,43 @@ app.post('/api/auth/register', async (req, res) => {
         // Генерируем токен верификации
         const verificationToken = crypto.randomBytes(32).toString('hex');
         
-        db.run(
-            "INSERT INTO users (name, email, password, verification_token) VALUES (?, ?, ?, ?)",
-            [full_name, email, hashedPassword, verificationToken],
-            function(err) {
-                if (err) {
-                    if (err.message.includes('UNIQUE constraint failed')) {
-                        res.status(400).json({
-                            success: false,
-                            error: 'Пользователь с таким email уже существует'
-                        });
-                    } else {
-                        res.status(400).json({
-                            success: false,
-                            error: 'Ошибка регистрации: ' + err.message
-                        });
-                    }
-                } else {
-                    console.log('✅ Пользователь зарегистрирован:', email);
-                    
-                    // Отправляем email подтверждения
-                    sendVerificationEmail(email, verificationToken)
-                        .then(() => {
-                            res.json({
-                                success: true,
-                                message: 'Регистрация успешна! Проверьте ваш email для подтверждения.'
-                            });
-                        })
-                        .catch(emailError => {
-                            console.error('❌ Ошибка отправки email:', emailError);
-                            res.json({
-                                success: true,
-                                message: 'Регистрация успешна, но не удалось отправить email подтверждения.'
-                            });
-                        });
-                }
+        try {
+            const stmt = db.prepare(
+                "INSERT INTO users (name, email, password, verification_token) VALUES (?, ?, ?, ?)"
+            );
+            const result = stmt.run(full_name, email, hashedPassword, verificationToken);
+            
+            console.log('✅ Пользователь зарегистрирован:', email);
+            
+            // Отправляем email подтверждения
+            sendVerificationEmail(email, verificationToken)
+                .then(() => {
+                    res.json({
+                        success: true,
+                        message: 'Регистрация успешна! Проверьте ваш email для подтверждения.'
+                    });
+                })
+                .catch(emailError => {
+                    console.error('❌ Ошибка отправки email:', emailError);
+                    res.json({
+                        success: true,
+                        message: 'Регистрация успешна, но не удалось отправить email подтверждения.'
+                    });
+                });
+                
+        } catch (dbError) {
+            if (dbError.message.includes('UNIQUE constraint failed')) {
+                res.status(400).json({
+                    success: false,
+                    error: 'Пользователь с таким email уже существует'
+                });
+            } else {
+                res.status(400).json({
+                    success: false,
+                    error: 'Ошибка регистрации: ' + dbError.message
+                });
             }
-        );
+        }
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -189,35 +184,37 @@ app.post('/api/auth/register', async (req, res) => {
 app.get('/api/auth/verify-email', (req, res) => {
     const { token } = req.query;
     
-    db.get(
-        "SELECT id FROM users WHERE verification_token = ? AND email_verified = FALSE",
-        [token],
-        (err, user) => {
-            if (err || !user) {
-                return res.redirect('/verification-failed.html');
-            }
-            
-            // Активируем аккаунт
-            db.run(
-                "UPDATE users SET email_verified = TRUE, verification_token = NULL WHERE id = ?",
-                [user.id],
-                (err) => {
-                    if (err) {
-                        return res.redirect('/verification-failed.html');
-                    }
-                    res.redirect('/verification-success.html');
-                }
-            );
+    try {
+        const stmt = db.prepare(
+            "SELECT id FROM users WHERE verification_token = ? AND email_verified = FALSE"
+        );
+        const user = stmt.get(token);
+        
+        if (!user) {
+            return res.redirect('/verification-failed.html');
         }
-    );
+        
+        // Активируем аккаунт
+        const updateStmt = db.prepare(
+            "UPDATE users SET email_verified = TRUE, verification_token = NULL WHERE id = ?"
+        );
+        updateStmt.run(user.id);
+        
+        res.redirect('/verification-success.html');
+    } catch (error) {
+        res.redirect('/verification-failed.html');
+    }
 });
 
 // Запрос восстановления пароля
 app.post('/api/auth/forgot-password', async (req, res) => {
     const { email } = req.body;
     
-    db.get("SELECT id FROM users WHERE email = ?", [email], (err, user) => {
-        if (err || !user) {
+    try {
+        const stmt = db.prepare("SELECT id FROM users WHERE email = ?");
+        const user = stmt.get(email);
+        
+        if (!user) {
             // Всегда возвращаем успех для безопасности
             return res.json({ 
                 success: true, 
@@ -229,124 +226,128 @@ app.post('/api/auth/forgot-password', async (req, res) => {
         const resetToken = crypto.randomBytes(32).toString('hex');
         const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 час
         
-        db.run(
-            "UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?",
-            [resetToken, resetTokenExpires.toISOString(), user.id],
-            function(err) {
-                if (err) {
-                    return res.status(500).json({ error: 'Ошибка сервера' });
-                }
-                
-                // Отправляем email с ссылкой сброса
-                sendPasswordResetEmail(email, resetToken)
-                    .then(() => {
-                        res.json({ 
-                            success: true, 
-                            message: 'Инструкции по восстановлению отправлены на email' 
-                        });
-                    })
-                    .catch(emailError => {
-                        console.error('❌ Ошибка отправки email:', emailError);
-                        res.json({ 
-                            success: false,
-                            error: 'Ошибка отправки email' 
-                        });
-                    });
-            }
+        const updateStmt = db.prepare(
+            "UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?"
         );
-    });
+        updateStmt.run(resetToken, resetTokenExpires.toISOString(), user.id);
+        
+        // Отправляем email с ссылкой сброса
+        sendPasswordResetEmail(email, resetToken)
+            .then(() => {
+                res.json({ 
+                    success: true, 
+                    message: 'Инструкции по восстановлению отправлены на email' 
+                });
+            })
+            .catch(emailError => {
+                console.error('❌ Ошибка отправки email:', emailError);
+                res.json({ 
+                    success: false,
+                    error: 'Ошибка отправки email' 
+                });
+            });
+            
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
 });
 
 // Сброс пароля
 app.post('/api/auth/reset-password', async (req, res) => {
     const { token, newPassword } = req.body;
     
-    // Проверяем токен
-    db.get(
-        "SELECT id FROM users WHERE reset_token = ? AND reset_token_expires > datetime('now')",
-        [token],
-        async (err, user) => {
-            if (err || !user) {
-                return res.status(400).json({ 
-                    success: false, 
-                    error: 'Недействительная или просроченная ссылка' 
-                });
-            }
-            
-            try {
-                // Хешируем новый пароль
-                const hashedPassword = await bcrypt.hash(newPassword, 10);
-                
-                // Обновляем пароль и очищаем токен
-                db.run(
-                    "UPDATE users SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?",
-                    [hashedPassword, user.id],
-                    function(err) {
-                        if (err) {
-                            return res.status(500).json({ error: 'Ошибка смены пароля' });
-                        }
-                        
-                        res.json({ 
-                            success: true, 
-                            message: 'Пароль успешно изменен' 
-                        });
-                    }
-                );
-            } catch (error) {
-                res.status(500).json({ error: 'Ошибка сервера' });
-            }
+    try {
+        // Проверяем токен
+        const stmt = db.prepare(
+            "SELECT id FROM users WHERE reset_token = ? AND reset_token_expires > datetime('now')"
+        );
+        const user = stmt.get(token);
+        
+        if (!user) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Недействительная или просроченная ссылка' 
+            });
         }
-    );
+        
+        // Хешируем новый пароль
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        
+        // Обновляем пароль и очищаем токен
+        const updateStmt = db.prepare(
+            "UPDATE users SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?"
+        );
+        updateStmt.run(hashedPassword, user.id);
+        
+        res.json({ 
+            success: true, 
+            message: 'Пароль успешно изменен' 
+        });
+        
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
 });
 
 // Вход (с проверкой верификации email)
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     
-    db.get(
-        "SELECT id, name, email, password, email_verified FROM users WHERE email = ?",
-        [email],
-        async (err, user) => {
-            if (err) {
-                res.status(500).json({ error: err.message });
-            } else if (user) {
-                // Проверяем пароль
-                const passwordMatch = await bcrypt.compare(password, user.password);
-                
-                if (passwordMatch) {
-                    if (!user.email_verified) {
-                        return res.status(401).json({
-                            success: false,
-                            error: 'Подтвердите ваш email перед входом'
-                        });
-                    }
-                    
-                    res.json({ 
-                        success: true, 
-                        message: 'Вход выполнен!',
-                        user: {
-                            id: user.id,
-                            name: user.name,
-                            email: user.email
-                        }
-                    });
-                } else {
-                    res.status(401).json({
+    try {
+        const stmt = db.prepare(
+            "SELECT id, name, email, password, email_verified FROM users WHERE email = ?"
+        );
+        const user = stmt.get(email);
+        
+        if (user) {
+            // Проверяем пароль
+            const passwordMatch = await bcrypt.compare(password, user.password);
+            
+            if (passwordMatch) {
+                if (!user.email_verified) {
+                    return res.status(401).json({
                         success: false,
-                        error: 'Неверный email или пароль'
+                        error: 'Подтвердите ваш email перед входом'
                     });
                 }
+                
+                res.json({ 
+                    success: true, 
+                    message: 'Вход выполнен!',
+                    user: {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email
+                    }
+                });
             } else {
                 res.status(401).json({
                     success: false,
                     error: 'Неверный email или пароль'
                 });
             }
+        } else {
+            res.status(401).json({
+                success: false,
+                error: 'Неверный email или пароль'
+            });
         }
-    );
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        message: 'Сервер работает!',
+        timestamp: new Date().toISOString()
+    });
 });
 
 // Запуск сервера
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🎯 Сервер запущен на порту ${PORT}`);
+    console.log(`🌐 Доступен по: http://localhost:${PORT}`);
 });
