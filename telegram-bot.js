@@ -11,7 +11,8 @@ const bot = new TelegramBot(token, {
     }
 });
 
-const SERVER_URL = 'http://localhost:5000';
+// Вместо localhost:5000 используйте
+const SERVER_URL = process.env.RAILWAY_STATIC_URL || 'https://sudu3.onrender.com';
 
 console.log('🚀 Запуск Telegram бота...');
 console.log('🔗 Подключение к серверу:', SERVER_URL);

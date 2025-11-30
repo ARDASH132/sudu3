@@ -5,8 +5,12 @@ const sqlite3 = require('sqlite3').verbose();
 const fetch = require('node-fetch');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+const HOST = process.env.RAILWAY_STATIC_URL ? '0.0.0.0' : 'localhost';
 
+app.listen(PORT, HOST, () => {
+    console.log(`Server running on http://${HOST}:${PORT}`);
+});
 // Middleware
 app.use(cors({
     origin: ['http://localhost:5000', 'http://127.0.0.1:5000'],
