@@ -1,6 +1,0 @@
-{
-  "build": {
-    "builder": "nixpacks",
-    "buildCommand": "npm rebuild sqlite3 --build-from-source && npm install"
-  }
-}
