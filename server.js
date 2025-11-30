@@ -12,8 +12,20 @@ app.listen(PORT, HOST, () => {
     console.log(`Server running on http://${HOST}:${PORT}`);
 });
 // Middleware
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? [
+        'https://sudu3.onrender.com',
+        'https://*.onrender.com',
+        'https://web-production-f0ff.up.railway.app'
+      ]
+    : [
+        'http://localhost:5000',
+        'http://127.0.0.1:5000',
+        'https://sudu3.onrender.com'
+      ];
+
 app.use(cors({
-    origin: ['http://localhost:5000', 'http://127.0.0.1:5000'],
+    origin: allowedOrigins,
     credentials: true
 }));
 app.use(express.json());
