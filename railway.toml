@@ -1,0 +1,16 @@
+[build]
+
+builder = "NIXPACKS"
+
+[deploy]
+
+numReplicas = 1
+
+[[services]]
+name = "web"  # Имя сервиса для веб-сайта
+run = "npm start"  # Команда для запуска веб-сайта (предполагается, что у вас есть server.js или эквивалент)
+port = 3000  # Порт, на котором будет работать веб-сайт
+
+[[services]]
+name = "bot"  # Имя сервиса для Telegram-бота
+run = "npm run bot"  # Команда для запуска бота, предполагается, что у вас есть скрипт "bot" в package.json
