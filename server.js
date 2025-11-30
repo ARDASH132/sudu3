@@ -24,7 +24,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
 // ==================== НАСТРОЙКА EMAIL ====================
-const emailTransporter = nodemailer.createTransporter({
+const emailTransporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: process.env.EMAIL_USER,
