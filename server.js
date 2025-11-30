@@ -2,37 +2,37 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
-const fetch = require('node-fetch');
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.RAILWAY_STATIC_URL ? '0.0.0.0' : 'localhost';
 
-app.listen(PORT, HOST, () => {
-    console.log(`Server running on http://${HOST}:${PORT}`);
-});
 // Middleware
-const allowedOrigins = process.env.NODE_ENV === 'production' 
-    ? [
-        'https://sudu3.onrender.com',
-        'https://*.onrender.com',
-        'https://web-production-f0ff.up.railway.app'
-      ]
-    : [
-        'http://localhost:5000',
-        'http://127.0.0.1:5000',
-        'https://sudu3.onrender.com'
-      ];
-
 app.use(cors({
-    origin: allowedOrigins,
+    origin: [
+        'http://localhost:5000', 
+        'http://127.0.0.1:5000',
+        'https://sudu3.onrender.com',
+        'https://*.onrender.com'
+    ],
     credentials: true
 }));
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
-app.use(express.static('.')); // Добавляем эту строку
 
-// ==================== ПОДКЛЮЧЕНИЕ К SQLite ====================
+// ==================== НАСТРОЙКА EMAIL ====================
+const emailTransporter = nodemailer.createTransporter({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+// ==================== БАЗА ДАННЫХ ====================
 const dbPath = path.join(__dirname, 'sudu_database.sqlite');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
@@ -51,7 +51,10 @@ function initializeDatabase() {
             name TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            telegram_chat_id BIGINT NULL,
+            email_verified BOOLEAN DEFAULT FALSE,
+            verification_token TEXT NULL,
+            reset_token TEXT NULL,
+            reset_token_expires DATETIME NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `, (err) => {
@@ -59,149 +62,68 @@ function initializeDatabase() {
             console.error('❌ Ошибка создания таблицы users:', err);
         } else {
             console.log('✅ Таблица users готова');
-            addTelegramChatIdColumn();
-        }
-    });
-
-    // Таблица для кодов восстановления
-    db.run(`
-        CREATE TABLE IF NOT EXISTS telegram_codes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            code VARCHAR(6) NOT NULL,
-            expires_at DATETIME NOT NULL,
-            used BOOLEAN DEFAULT FALSE,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-        )
-    `, (err) => {
-        if (err) {
-            console.error('❌ Ошибка создания таблицы telegram_codes:', err);
-        } else {
-            console.log('✅ Таблица telegram_codes готова');
-        }
-    });
-
-    // Таблица для кодов привязки Telegram
-    db.run(`
-        CREATE TABLE IF NOT EXISTS telegram_link_codes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            code VARCHAR(6) NOT NULL,
-            expires_at DATETIME NOT NULL,
-            used BOOLEAN DEFAULT FALSE,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-        )
-    `, (err) => {
-        if (err) {
-            console.error('❌ Ошибка создания таблицы telegram_link_codes:', err);
-        } else {
-            console.log('✅ Таблица telegram_link_codes готова');
         }
     });
 }
 
-// Функция для добавления колонки telegram_chat_id если её нет
-function addTelegramChatIdColumn() {
-    console.log('🔄 Добавляем колонку telegram_chat_id...');
-    db.run("ALTER TABLE users ADD COLUMN telegram_chat_id BIGINT NULL", (err) => {
-        if (err) {
-            if (err.message.includes('duplicate column name')) {
-                console.log('✅ Колонка telegram_chat_id уже существует');
-            } else {
-                console.error('❌ Ошибка добавления колонки:', err.message);
-            }
-        } else {
-            console.log('✅ Колонка telegram_chat_id успешно добавлена');
-        }
-    });
+// ==================== EMAIL ФУНКЦИИ ====================
+async function sendVerificationEmail(email, verificationToken) {
+    const verificationLink = `${process.env.SERVER_URL || 'http://localhost:5000'}/verify-email.html?token=${verificationToken}`;
+    
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Подтверждение email - СУДУ',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333;">Добро пожаловать в СУДУ!</h2>
+                <p>Для завершения регистрации подтвердите ваш email:</p>
+                <a href="${verificationLink}" 
+                   style="display: inline-block; padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 4px;">
+                    Подтвердить email
+                </a>
+                <p style="margin-top: 20px; color: #666;">
+                    Если вы не регистрировались в СУДУ, проигнорируйте это письмо.
+                </p>
+            </div>
+        `
+    };
+
+    await emailTransporter.sendMail(mailOptions);
 }
 
-// ==================== ФУНКЦИИ TELEGRAM ====================
+async function sendPasswordResetEmail(email, resetToken) {
+    const resetLink = `${process.env.SERVER_URL || 'http://localhost:5000'}/reset-password.html?token=${resetToken}`;
+    
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Восстановление пароля - СУДУ',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333;">Восстановление пароля</h2>
+                <p>Для восстановления пароля перейдите по ссылке ниже:</p>
+                <a href="${resetLink}" 
+                   style="display: inline-block; padding: 12px 24px; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">
+                    Восстановить пароль
+                </a>
+                <p style="margin-top: 20px; color: #666;">
+                    Если вы не запрашивали восстановление пароля, проигнорируйте это письмо.
+                </p>
+                <p style="color: #999; font-size: 12px;">
+                    Ссылка действительна в течение 1 часа.
+                </p>
+            </div>
+        `
+    };
 
-// Функция отправки сообщения в Telegram
-async function sendTelegramMessage(chatId, message) {
-    try {
-        const TELEGRAM_TOKEN = '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
-        const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: message,
-                parse_mode: 'HTML'
-            })
-        });
-        
-        const result = await response.json();
-        console.log('📤 Результат отправки в Telegram:', result);
-        
-        if (!result.ok) {
-            throw new Error(result.description || 'Unknown Telegram error');
-        }
-        
-        return result;
-    } catch (error) {
-        console.error('❌ Ошибка отправки Telegram сообщения:', error);
-        throw error;
-    }
+    await emailTransporter.sendMail(mailOptions);
 }
 
 // ==================== API ROUTES ====================
 
-// Health check
-app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        message: 'Сервер работает!',
-        timestamp: new Date().toISOString()
-    });
-});
-
-// Главная страница
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Другие страницы
-app.get('/main.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'main.html'));
-});
-
-app.get('/register.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'register.html'));
-});
-
-app.get('/forgot-password-telegram.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'forgot-password-telegram.html'));
-});
-
-app.get('/courses.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'courses.html'));
-});
-
-app.get('/leaderboard.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'leaderboard.html'));
-});
-
-// Получение всех пользователей
-app.get('/api/users', (req, res) => {
-    db.all("SELECT id, name, email, telegram_chat_id, created_at FROM users ORDER BY created_at DESC", (err, rows) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-        } else {
-            res.json({ success: true, users: rows });
-        }
-    });
-});
-
-// ==================== РЕГИСТРАЦИЯ И ПРИВЯЗКА TELEGRAM ====================
-
-// Регистрация пользователя
-app.post('/api/auth/register', (req, res) => {
+// Регистрация с отправкой verification email
+app.post('/api/auth/register', async (req, res) => {
     const { full_name, email, password } = req.body;
     
     if (!full_name || !email || !password) {
@@ -211,242 +133,209 @@ app.post('/api/auth/register', (req, res) => {
         });
     }
     
-    db.run(
-        "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-        [full_name, email, password],
-        function(err) {
-            if (err) {
-                if (err.message.includes('UNIQUE constraint failed')) {
-                    res.status(400).json({
-                        success: false,
-                        error: 'Пользователь с таким email уже существует'
-                    });
+    try {
+        // Хешируем пароль
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Генерируем токен верификации
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        
+        db.run(
+            "INSERT INTO users (name, email, password, verification_token) VALUES (?, ?, ?, ?)",
+            [full_name, email, hashedPassword, verificationToken],
+            function(err) {
+                if (err) {
+                    if (err.message.includes('UNIQUE constraint failed')) {
+                        res.status(400).json({
+                            success: false,
+                            error: 'Пользователь с таким email уже существует'
+                        });
+                    } else {
+                        res.status(400).json({
+                            success: false,
+                            error: 'Ошибка регистрации: ' + err.message
+                        });
+                    }
                 } else {
-                    res.status(400).json({
-                        success: false,
-                        error: 'Ошибка регистрации: ' + err.message
-                    });
+                    console.log('✅ Пользователь зарегистрирован:', email);
+                    
+                    // Отправляем email подтверждения
+                    sendVerificationEmail(email, verificationToken)
+                        .then(() => {
+                            res.json({
+                                success: true,
+                                message: 'Регистрация успешна! Проверьте ваш email для подтверждения.'
+                            });
+                        })
+                        .catch(emailError => {
+                            console.error('❌ Ошибка отправки email:', emailError);
+                            res.json({
+                                success: true,
+                                message: 'Регистрация успешна, но не удалось отправить email подтверждения.'
+                            });
+                        });
                 }
-            } else {
-                console.log('✅ Пользователь зарегистрирован:', email, 'ID:', this.lastID);
-                
-                res.json({
-                    success: true,
-                    message: 'Регистрация успешна! Теперь привяжите Telegram.',
-                    user_id: this.lastID
-                });
             }
+        );
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: 'Ошибка сервера'
+        });
+    }
+});
+
+// Подтверждение email
+app.get('/api/auth/verify-email', (req, res) => {
+    const { token } = req.query;
+    
+    db.get(
+        "SELECT id FROM users WHERE verification_token = ? AND email_verified = FALSE",
+        [token],
+        (err, user) => {
+            if (err || !user) {
+                return res.redirect('/verification-failed.html');
+            }
+            
+            // Активируем аккаунт
+            db.run(
+                "UPDATE users SET email_verified = TRUE, verification_token = NULL WHERE id = ?",
+                [user.id],
+                (err) => {
+                    if (err) {
+                        return res.redirect('/verification-failed.html');
+                    }
+                    res.redirect('/verification-success.html');
+                }
+            );
         }
     );
 });
 
-// Запрос кода для привязки Telegram
-app.post('/api/auth/request-telegram-link', (req, res) => {
+// Запрос восстановления пароля
+app.post('/api/auth/forgot-password', async (req, res) => {
     const { email } = req.body;
     
-    console.log('🔗 Запрос кода привязки для:', email);
-    
-    // Ищем пользователя по email
-    db.get("SELECT id, name FROM users WHERE email = ?", [email], (err, user) => {
+    db.get("SELECT id FROM users WHERE email = ?", [email], (err, user) => {
         if (err || !user) {
-            return res.status(400).json({
-                success: false,
-                error: 'Пользователь не найден. Сначала завершите регистрацию.'
+            // Всегда возвращаем успех для безопасности
+            return res.json({ 
+                success: true, 
+                message: 'Если email существует, инструкции отправлены' 
             });
         }
         
-        // Проверяем, не привязан ли уже Telegram
-        db.get("SELECT telegram_chat_id FROM users WHERE id = ? AND telegram_chat_id IS NOT NULL", [user.id], (err, result) => {
-            if (err) {
-                return res.status(500).json({ error: 'Ошибка сервера' });
-            }
-            
-            if (result) {
-                return res.json({
-                    success: false,
-                    error: 'Telegram уже привязан к этому аккаунту'
-                });
-            }
-            
-            // Генерируем код привязки
-            const linkCode = Math.floor(100000 + Math.random() * 900000).toString();
-            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-            
-            // Сохраняем код в базу
-            db.run(
-                "INSERT INTO telegram_link_codes (user_id, code, expires_at) VALUES (?, ?, ?)",
-                [user.id, linkCode, expiresAt.toISOString()],
-                function(err) {
-                    if (err) {
-                        console.error('❌ Ошибка сохранения кода привязки:', err);
-                        return res.status(500).json({ error: 'Ошибка сервера' });
-                    }
-                    
-                    console.log('✅ Код привязки сгенерирован:', linkCode, 'для пользователя:', user.id);
-                    
-                    res.json({ 
-                        success: true, 
-                        linkCode: linkCode,
-                        instructions: `Отправьте боту команду: /link ${linkCode}`,
-                        message: 'Код для привязки Telegram получен'
-                    });
+        // Генерируем токен сброса
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 час
+        
+        db.run(
+            "UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?",
+            [resetToken, resetTokenExpires.toISOString(), user.id],
+            function(err) {
+                if (err) {
+                    return res.status(500).json({ error: 'Ошибка сервера' });
                 }
-            );
-        });
+                
+                // Отправляем email с ссылкой сброса
+                sendPasswordResetEmail(email, resetToken)
+                    .then(() => {
+                        res.json({ 
+                            success: true, 
+                            message: 'Инструкции по восстановлению отправлены на email' 
+                        });
+                    })
+                    .catch(emailError => {
+                        console.error('❌ Ошибка отправки email:', emailError);
+                        res.json({ 
+                            success: false,
+                            error: 'Ошибка отправки email' 
+                        });
+                    });
+            }
+        );
     });
 });
 
-// Подтверждение привязки Telegram
-app.post('/api/auth/confirm-telegram-link', (req, res) => {
-    const { linkCode, telegram_chat_id } = req.body;
+// Сброс пароля
+app.post('/api/auth/reset-password', async (req, res) => {
+    const { token, newPassword } = req.body;
     
-    console.log('🔗 Подтверждение привязки, код:', linkCode, 'chat_id:', telegram_chat_id);
-    
-    if (!linkCode || !telegram_chat_id) {
-        return res.status(400).json({ 
-            success: false, 
-            error: 'Отсутствуют обязательные параметры' 
-        });
-    }
-    
-    // Ищем код привязки в базе
+    // Проверяем токен
     db.get(
-        `SELECT tlc.*, u.email, u.name 
-         FROM telegram_link_codes tlc 
-         JOIN users u ON tlc.user_id = u.id 
-         WHERE tlc.code = ? AND tlc.used = FALSE AND tlc.expires_at > datetime('now')`,
-        [linkCode],
-        (err, codeRecord) => {
-            if (err) {
-                console.error('❌ Ошибка поиска кода:', err);
-                return res.status(500).json({ 
-                    success: false, 
-                    error: 'Ошибка сервера' 
-                });
-            }
-            
-            if (!codeRecord) {
+        "SELECT id FROM users WHERE reset_token = ? AND reset_token_expires > datetime('now')",
+        [token],
+        async (err, user) => {
+            if (err || !user) {
                 return res.status(400).json({ 
                     success: false, 
-                    error: 'Неверный или просроченный код привязки' 
+                    error: 'Недействительная или просроченная ссылка' 
                 });
             }
             
-            // Проверяем, не привязан ли уже этот chat_id к другому аккаунту
-            db.get(
-                "SELECT email FROM users WHERE telegram_chat_id = ?",
-                [telegram_chat_id],
-                (err, existingUser) => {
-                    if (err) {
-                        console.error('❌ Ошибка проверки chat_id:', err);
-                        return res.status(500).json({ 
-                            success: false, 
-                            error: 'Ошибка сервера' 
-                        });
-                    }
-                    
-                    if (existingUser) {
-                        return res.status(400).json({ 
-                            success: false, 
-                            error: 'Этот Telegram уже привязан к другому аккаунту' 
-                        });
-                    }
-                    
-                    // Привязываем Telegram к пользователю
-                    db.run(
-                        "UPDATE users SET telegram_chat_id = ? WHERE id = ?",
-                        [telegram_chat_id, codeRecord.user_id],
-                        function(err) {
-                            if (err) {
-                                console.error('❌ Ошибка привязки Telegram:', err);
-                                return res.status(500).json({ 
-                                    success: false, 
-                                    error: 'Ошибка привязки' 
-                                });
-                            }
-                            
-                            // Помечаем код как использованный
-                            db.run(
-                                "UPDATE telegram_link_codes SET used = TRUE WHERE id = ?",
-                                [codeRecord.id]
-                            );
-                            
-                            console.log('✅ Telegram привязан к пользователю:', codeRecord.email);
-                            
-                            // Отправляем приветственное сообщение
-                            sendTelegramMessage(telegram_chat_id,
-                                `✅ Telegram успешно привязан!\n\n` +
-                                `📧 Аккаунт: ${codeRecord.email}\n` +
-                                `👤 Имя: ${codeRecord.name}\n\n` +
-                                `Теперь вы можете восстанавливать пароль через сайт!\n\n` +
-                                `Для восстановления:\n` +
-                                `1. Нажмите "Забыли пароль?" на сайте\n` +
-                                `2. Введите email: ${codeRecord.email}\n` +
-                                `3. Код придет сюда автоматически`
-                            ).catch(err => {
-                                console.error('Ошибка отправки приветственного сообщения:', err);
-                            });
-                            
-                            res.json({ 
-                                success: true, 
-                                message: 'Telegram успешно привязан',
-                                email: codeRecord.email,
-                                name: codeRecord.name
-                            });
+            try {
+                // Хешируем новый пароль
+                const hashedPassword = await bcrypt.hash(newPassword, 10);
+                
+                // Обновляем пароль и очищаем токен
+                db.run(
+                    "UPDATE users SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?",
+                    [hashedPassword, user.id],
+                    function(err) {
+                        if (err) {
+                            return res.status(500).json({ error: 'Ошибка смены пароля' });
                         }
-                    );
-                }
-            );
+                        
+                        res.json({ 
+                            success: true, 
+                            message: 'Пароль успешно изменен' 
+                        });
+                    }
+                );
+            } catch (error) {
+                res.status(500).json({ error: 'Ошибка сервера' });
+            }
         }
     );
 });
 
-// Проверка привязки Telegram
-app.post('/api/auth/check-telegram-link', (req, res) => {
-    const { email } = req.body;
-    
-    if (!email) {
-        return res.json({ 
-            success: false,
-            error: 'Email обязателен'
-        });
-    }
-    
-    db.get("SELECT telegram_chat_id FROM users WHERE email = ?", [email], (err, user) => {
-        if (err || !user) {
-            return res.json({ 
-                success: false,
-                linked: false,
-                error: 'Пользователь не найден'
-            });
-        }
-        
-        res.json({ 
-            success: true,
-            linked: !!user.telegram_chat_id,
-            telegram_chat_id: user.telegram_chat_id 
-        });
-    });
-});
-
-// ==================== ВОССТАНОВЛЕНИЕ ПАРОЛЯ ====================
-
-// Вход
-app.post('/api/auth/login', (req, res) => {
+// Вход (с проверкой верификации email)
+app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     
     db.get(
-        "SELECT id, name, email FROM users WHERE email = ? AND password = ?",
-        [email, password],
-        (err, user) => {
+        "SELECT id, name, email, password, email_verified FROM users WHERE email = ?",
+        [email],
+        async (err, user) => {
             if (err) {
                 res.status(500).json({ error: err.message });
             } else if (user) {
-                res.json({ 
-                    success: true, 
-                    message: 'Вход выполнен!',
-                    user: user
-                });
+                // Проверяем пароль
+                const passwordMatch = await bcrypt.compare(password, user.password);
+                
+                if (passwordMatch) {
+                    if (!user.email_verified) {
+                        return res.status(401).json({
+                            success: false,
+                            error: 'Подтвердите ваш email перед входом'
+                        });
+                    }
+                    
+                    res.json({ 
+                        success: true, 
+                        message: 'Вход выполнен!',
+                        user: {
+                            id: user.id,
+                            name: user.name,
+                            email: user.email
+                        }
+                    });
+                } else {
+                    res.status(401).json({
+                        success: false,
+                        error: 'Неверный email или пароль'
+                    });
+                }
             } else {
                 res.status(401).json({
                     success: false,
@@ -457,202 +346,7 @@ app.post('/api/auth/login', (req, res) => {
     );
 });
 
-// Запрос кода восстановления через сайт
-app.post('/api/auth/request-password-reset', (req, res) => {
-    const { email } = req.body;
-    
-    console.log('🔐 Запрос восстановления для:', email);
-    
-    // Ищем пользователя
-    db.get("SELECT id, name, telegram_chat_id FROM users WHERE email = ?", [email], (err, user) => {
-        if (err || !user) {
-            return res.json({ 
-                success: false,
-                error: 'Пользователь с таким email не найден'
-            });
-        }
-        
-        if (!user.telegram_chat_id) {
-            return res.json({
-                success: false,
-                error: 'Telegram не привязан к аккаунту. Сначала привяжите Telegram в настройках профиля.'
-            });
-        }
-        
-        // Генерируем код
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-        
-        console.log('✅ Код восстановления сгенерирован:', code, 'для пользователя:', user.email, 'chat_id:', user.telegram_chat_id);
-        
-        // Сохраняем код в базу
-        db.run(
-            "INSERT INTO telegram_codes (user_id, code, expires_at) VALUES (?, ?, ?)",
-            [user.id, code, expiresAt.toISOString()],
-            function(err) {
-                if (err) {
-                    console.error('❌ Ошибка сохранения кода:', err);
-                    return res.status(500).json({ error: 'Ошибка сервера' });
-                }
-                
-                // Отправляем код через Telegram API напрямую
-                sendTelegramMessage(user.telegram_chat_id, 
-                    `🔐 Код восстановления пароля СУДУ\n\n` +
-                    `📧 Для: ${user.email}\n` +
-                    `👤 Пользователь: ${user.name}\n` +
-                    `🔢 Код: ${code}\n` +
-                    `⏰ Действует 10 минут\n\n` +
-                    `Введите этот код на сайте для смены пароля`
-                ).then(() => {
-                    console.log('✅ Код отправлен в Telegram');
-                    res.json({ 
-                        success: true, 
-                        message: 'Код отправлен в привязанный Telegram'
-                    });
-                }).catch(error => {
-                    console.error('❌ Ошибка отправки в Telegram:', error);
-                    res.json({ 
-                        success: false,
-                        error: 'Ошибка отправки кода в Telegram: ' + error.message
-                    });
-                });
-            }
-        );
-    });
-});
-
-// Проверка кода и смена пароля
-app.post('/api/auth/reset-password', (req, res) => {
-    const { email, code, newPassword } = req.body;
-    
-    // Проверяем код
-    db.get(
-        `SELECT tc.* FROM telegram_codes tc
-         JOIN users u ON tc.user_id = u.id
-         WHERE u.email = ? AND tc.code = ? AND tc.used = FALSE AND tc.expires_at > datetime('now')`,
-        [email, code],
-        (err, codeRecord) => {
-            if (err || !codeRecord) {
-                return res.status(400).json({ 
-                    success: false, 
-                    error: 'Неверный или просроченный код' 
-                });
-            }
-            
-            // Меняем пароль
-            db.run(
-                "UPDATE users SET password = ? WHERE email = ?",
-                [newPassword, email],
-                function(err) {
-                    if (err) {
-                        return res.status(500).json({ error: 'Ошибка смены пароля' });
-                    }
-                    
-                    // Помечаем код как использованный
-                    db.run("UPDATE telegram_codes SET used = TRUE WHERE id = ?", [codeRecord.id]);
-                    
-                    res.json({ 
-                        success: true, 
-                        message: 'Пароль успешно изменен' 
-                    });
-                }
-            );
-        }
-    );
-});
-
-// Запрос кода восстановления для бота
-app.post('/api/auth/request-telegram-code', (req, res) => {
-    const { email } = req.body;
-    
-    console.log('🔐 Бот запрашивает код для:', email);
-    
-    // Ищем пользователя с привязанным Telegram
-    db.get(
-        "SELECT id, name, telegram_chat_id FROM users WHERE email = ? AND telegram_chat_id IS NOT NULL",
-        [email],
-        (err, user) => {
-            if (err || !user) {
-                return res.json({ 
-                    success: false, 
-                    error: 'Пользователь не найден или Telegram не привязан' 
-                });
-            }
-            
-            // Генерируем код восстановления
-            const code = Math.floor(100000 + Math.random() * 900000).toString();
-            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-            
-            // Сохраняем код в базу
-            db.run(
-                "INSERT INTO telegram_codes (user_id, code, expires_at) VALUES (?, ?, ?)",
-                [user.id, code, expiresAt.toISOString()],
-                function(err) {
-                    if (err) {
-                        console.error('❌ Ошибка сохранения кода:', err);
-                        return res.status(500).json({ 
-                            success: false, 
-                            error: 'Ошибка сервера' 
-                        });
-                    }
-                    
-                    console.log('✅ Код восстановления сгенерирован:', code, 'для пользователя:', user.email);
-                    
-                    // Отправляем код через Telegram
-                    sendTelegramMessage(user.telegram_chat_id,
-                        `🔐 Код восстановления пароля:\n` +
-                        `📧 Для: ${user.email}\n` +
-                        `🔢 Код: ${code}\n` +
-                        `⏰ Действует 10 минут\n\n` +
-                        `Введите этот код на сайте для смены пароля`
-                    ).then(() => {
-                        res.json({ 
-                            success: true, 
-                            message: 'Код отправлен в Telegram',
-                            code: code
-                        });
-                    }).catch(error => {
-                        res.json({ 
-                            success: false,
-                            error: 'Ошибка отправки кода в Telegram'
-                        });
-                    });
-                }
-            );
-        }
-    );
-});
-
-// Тестовый endpoint для проверки отправки сообщений
-app.get('/api/test-telegram', (req, res) => {
-    const { chat_id, message } = req.query;
-    
-    if (!chat_id || !message) {
-        return res.json({ error: 'Укажите chat_id и message параметры' });
-    }
-    
-    sendTelegramMessage(chat_id, message)
-        .then(result => {
-            res.json({ success: true, result });
-        })
-        .catch(error => {
-            res.json({ success: false, error: error.message });
-        });
-});
-
-// Обработка 404 для API
-app.use('/api/*', (req, res) => {
-    res.status(404).json({ error: 'API endpoint not found' });
-});
-
-// Обработка 404 для страниц
-app.use('*', (req, res) => {
-    res.status(404).sendFile(path.join(__dirname, 'index.html'));
-});
-
 // Запуск сервера
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🎯 Сервер запущен на http://localhost:${PORT}`);
-    console.log(`🎯 Сервер также доступен по http://127.0.0.1:${PORT}`);
-    console.log(`✅ Все API должны работать!`);
+    console.log(`🎯 Сервер запущен на порту ${PORT}`);
 });
