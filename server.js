@@ -10,13 +10,26 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+// Middleware
 app.use(cors({
-    origin: [
-        'http://localhost:5000', 
-        'http://127.0.0.1:5000',
-        'https://sudu3.onrender.com',
-        'https://*.onrender.com'
-    ],
+    origin: function(origin, callback) {
+        // Разрешаем все origins в Railway
+        const allowedOrigins = [
+            'http://localhost:5000', 
+            'http://127.0.0.1:5000',
+            /\.railway\.app$/  // Все поддомены Railway
+        ];
+        
+        if (!origin || allowedOrigins.some(allowed => {
+            if (typeof allowed === 'string') return origin === allowed;
+            if (allowed instanceof RegExp) return allowed.test(origin);
+            return false;
+        })) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 
@@ -26,9 +39,11 @@ app.use(express.static(path.join(__dirname)));
 // ==================== TELEGRAM ФУНКЦИИ ====================
 
 // Функция отправки сообщения в Telegram
+// Функция отправки сообщения в Telegram
 async function sendTelegramMessage(chatId, message) {
     try {
-        const TELEGRAM_TOKEN = '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
+        const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
+        // ... остальной код без изменений
         const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: {
@@ -488,9 +503,24 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString()
     });
 });
+// После всех API роутов добавьте:
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 
 // Запуск сервера
+// Запуск сервера
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🎯 Сервер запущен на порту ${PORT}`);
-    console.log(`🌐 Доступен по: http://localhost:${PORT}`);
+    console.log(`🚂 Сервер запущен на Railway`);
+    console.log(`🌐 Порт: ${PORT}`);
+    console.log(`⚡ Готов к работе!`);
+});
+// Обработка ошибок
+app.use((err, req, res, next) => {
+    console.error('❌ Ошибка сервера:', err.stack);
+    res.status(500).json({ 
+        success: false, 
+        error: 'Внутренняя ошибка сервера' 
+    });
 });

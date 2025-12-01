@@ -1,7 +1,17 @@
 const TelegramBot = require('node-telegram-bot-api');
 const fetch = require('node-fetch');
 
-const token = '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
+// Токен из переменных окружения Railway
+const token = process.env.TELEGRAM_TOKEN || '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
+
+// URL сервера для Railway
+const SERVER_URL = process.env.RAILWAY_STATIC_URL || 'http://localhost:5000';
+
+console.log('🚀 Запуск Telegram бота...');
+console.log('📡 Окружение:', process.env.NODE_ENV || 'development');
+console.log('🔗 Сервер:', SERVER_URL);
+
+// Инициализация бота
 const bot = new TelegramBot(token, { 
     polling: {
         interval: 300,
@@ -10,11 +20,6 @@ const bot = new TelegramBot(token, {
         }
     }
 });
-
-const SERVER_URL = 'http://localhost:5000';
-
-console.log('🚀 Запуск Telegram бота...');
-console.log('🔗 Подключение к серверу:', SERVER_URL);
 
 // Команда /start
 bot.onText(/\/start/, (msg) => {
@@ -94,11 +99,10 @@ bot.onText(/\/link (.+)/, async (msg, match) => {
     } catch (error) {
         console.error('❌ Ошибка привязки:', error);
         bot.sendMessage(chatId, 
-            '❌ Ошибка соединения с сервером\n\n' +
-            'Убедитесь что:\n' +
-            '• Сервер запущен на localhost:5000\n' +
-            '• Бот и сервер на одном компьютере\n' +
-            '• Сообщите об ошибке администратору'
+            `❌ Ошибка соединения с сервером\n\n` +
+            `Сервер: ${SERVER_URL}\n` +
+            `Ошибка: ${error.message}\n\n` +
+            `Сообщите об ошибке администратору`
         );
     }
 });
@@ -116,18 +120,26 @@ bot.on('message', (msg) => {
             `/start - начать работу\n` +
             `/link КОД - привязать аккаунт\n` +
             `/help - помощь\n\n` +
-            `Для восстановления пароля используйте сайт!`
+            `Для восстановления пароля используйте сайт!\n` +
+            `Сайт: ${SERVER_URL}`
         );
     }
 });
 
 // Обработка ошибок
 bot.on('polling_error', (error) => {
-    console.error('❌ Ошибка polling:', error);
+    console.error('❌ Ошибка polling Telegram:', error);
 });
 
 bot.on('webhook_error', (error) => {
-    console.error('❌ Ошибка webhook:', error);
+    console.error('❌ Ошибка webhook Telegram:', error);
+});
+
+// Graceful shutdown для Railway
+process.on('SIGTERM', () => {
+    console.log('🛑 Получен SIGTERM, останавливаю бота...');
+    bot.stopPolling();
+    process.exit(0);
 });
 
 console.log('🤖 Telegram Bot успешно запущен!');
