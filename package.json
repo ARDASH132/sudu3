@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
+    "postinstall": "npm rebuild sqlite3",
     "start": "npm-run-all --parallel server bot",
-    "dev": "npm-run-all --parallel server bot", 
+    "dev": "npm-run-all --parallel server bot",
     "server": "node server.js",
     "bot": "node telegram-bot.js"
   },
