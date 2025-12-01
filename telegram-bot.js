@@ -5,7 +5,9 @@ const fetch = require('node-fetch');
 const token = process.env.TELEGRAM_TOKEN || '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
 
 // URL сервера для Railway
-const SERVER_URL = process.env.RAILWAY_STATIC_URL || 'http://localhost:5000';
+const SERVER_URL = process.env.RAILWAY_PUBLIC_DOMAIN 
+    ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+    : 'http://localhost:5000';
 
 console.log('🚀 Запуск Telegram бота...');
 console.log('📡 Окружение:', process.env.NODE_ENV || 'development');

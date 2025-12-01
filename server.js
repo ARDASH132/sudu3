@@ -11,6 +11,20 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 // Middleware
+// В самое начало роутов, после middleware:
+app.get('/', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        service: 'SUDU API',
+        message: 'Сервер работает корректно',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// А затем уже другие роуты
+app.get('/index.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 app.use(cors({
     origin: function(origin, callback) {
         // Разрешаем все origins в Railway
