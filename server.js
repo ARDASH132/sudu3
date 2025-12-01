@@ -1,3 +1,4 @@
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -6,7 +7,6 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const fetch = require('node-fetch');
 const TelegramBot = require('node-telegram-bot-api');
-const bot = new TelegramBot(process.env.TELEGRAM_TOKEN || '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -95,8 +95,7 @@ async function sendTelegramMessage(chatId, message) {
 }
 
 // ==================== БАЗА ДАННЫХ ====================
-const dbPath = path.join(__dirname, 'sudu_database.sqlite');
-const db = new sqlite3.Database(dbPath, (err) => {
+const db = new sqlite3.Database(':memory:', (err) => {  // ← SQLite в памяти
     if (err) {
         console.error('❌ Ошибка подключения к SQLite:', err.message);
     } else {
