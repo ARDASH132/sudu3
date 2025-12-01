@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Часто задаваемые вопросы | Учебный портал</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f7ff 0%, #ffffff 50%, #f0eeff 100%);
+            color: #333;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+        }
+
+        /* Красивый узорный фон */
+        .pattern-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(106, 90, 205, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(147, 112, 219, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 48%, rgba(106, 90, 205, 0.03) 48%, rgba(106, 90, 205, 0.03) 52%, transparent 52%),
+                linear-gradient(-45deg, transparent 48%, rgba(138, 43, 226, 0.03) 48%, rgba(138, 43, 226, 0.03) 52%, transparent 52%);
+            background-size: 60px 60px;
+            z-index: 0;
+        }
+
+        /* Декоративные элементы  */
+        .floating-element {
+            position: absolute;
+            z-index: 0;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            z-index: 1;
+            position: relative;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #4a3b8c;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #6c63a0;
+            font-size: 1.2rem;
+        }
+
+        .faq-container {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(106, 90, 205, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .faq-item {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #eae7f8;
+            padding-bottom: 20px;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .faq-question {
+            font-size: 1.3rem;
+            color: #4a3b8c;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-question:hover {
+            color: #6a5acd;
+        }
+
+        .faq-answer {
+            color: #555;
+            line-height: 1.6;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .faq-answer.active {
+            max-height: 500px;
+        }
+
+        .toggle-icon {
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .toggle-icon {
+            transform: rotate(45deg);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #6a5acd;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: #4a3b8c;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(106, 90, 205, 0.9);
+            color: white;
+            border: 2px solid #6A5ACD;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(106, 90, 205, 0.3);
+        }
+
+        .back-button:hover {
+            background: rgba(106, 90, 205, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(106, 90, 205, 0.4);
+        }
+
+        .back-button {
+            top: 1rem;
+            left: 1rem;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="pattern-bg"></div>
+
+    <!-- Декоративные элементы -->
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+
+    <div class="container">
+        <header>
+            <h1>Часто задаваемые вопросы</h1>
+            <p class="subtitle">Найдите ответы на самые популярные вопросы о нашем учебном портале</p>
+        </header>
+        <a href="main.html" class="back-button">← Назад</a>
+
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question">
+                    Как зарегистрироваться на учебном портале?
+                    <span class="toggle-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    Для регистрации на учебном портале необходимо перейти на главную страницу и нажать кнопку
+                    "Регистрация".
+                    Затем заполнить все обязательные поля формы и подтвердить свою электронную почту.
+                    После подтверждения вы получите доступ ко всем функциям портала.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    Как получить доступ к материалам курса?
+                    <span class="toggle-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    Доступ к материалам курса предоставляется после успешной регистрации.
+                    В личном кабинете вы найдете раздел "Курсы", где будут доступны все Ваши курсы и их
+                    материалы.
+                </div>
+            </div>
+
+
+
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const faqItems = document.querySelectorAll('.faq-item');
+
+                faqItems.forEach(item => {
+                    const question = item.querySelector('.faq-question');
+                    const answer = item.querySelector('.faq-answer');
+
+                    question.addEventListener('click', () => {
+                        faqItems.forEach(otherItem => {
+                            if (otherItem !== item) {
+                                otherItem.classList.remove('active');
+                                otherItem.querySelector('.faq-answer').classList.remove('active');
+                            }
+                        });
+                        item.classList.toggle('active');
+                        answer.classList.toggle('active');
+                    });
+                });
+            });
+        </script>
+</body>
+
+</html>

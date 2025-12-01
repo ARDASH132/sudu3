@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Главная - УУНиТ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f7ff 0%, #ffffff 50%, #f0eeff 100%);
+            color: #333;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .pattern-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(106, 90, 205, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(147, 112, 219, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 48%, rgba(106, 90, 205, 0.03) 48%, rgba(106, 90, 205, 0.03) 52%, transparent 52%),
+                linear-gradient(-45deg, transparent 48%, rgba(138, 43, 226, 0.03) 48%, rgba(138, 43, 226, 0.03) 52%, transparent 52%);
+            background-size: 60px 60px;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .university-logo {
+            max-height: 120px;
+            object-fit: contain;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 4px 8px rgba(106, 90, 205, 0.2));
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 2px 4px rgba(106, 90, 205, 0.1);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3rem;
+        }
+
+        .student-profile {
+            text-align: center;
+            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
+            padding: 2.5rem;
+            border-radius: 25px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow:
+                0 15px 35px rgba(106, 90, 205, 0.3),
+                0 5px 15px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            max-width: 420px;
+            width: 100%;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .student-profile::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 6s infinite;
+        }
+
+        @keyframes shine {
+            0% {
+                transform: rotate(45deg) translateX(-100%);
+            }
+            100% {
+                transform: rotate(45deg) translateX(100%);
+            }
+        }
+
+        .student-avatar {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.8);
+            object-fit: cover;
+            margin: 0 auto 1.5rem;
+            box-shadow:
+                0 8px 25px rgba(0, 0, 0, 0.3),
+                0 0 0 2px rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 2;
+            transition: transform 0.3s ease;
+        }
+
+        .student-avatar:hover {
+            transform: scale(1.05);
+        }
+
+        .student-id {
+            font-size: 1.1rem;
+            color: #e6e6ff;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+        }
+
+        .student-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: white;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .student-group {
+            font-size: 1.2rem;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 2;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .student-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 1.2rem;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 0.3rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #e6e6ff;
+            font-weight: 500;
+        }
+
+        .main-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+        }
+
+        .main-btn {
+            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1.8rem 1.5rem;
+            border-radius: 20px;
+            text-decoration: none;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8rem;
+            box-shadow:
+                0 8px 25px rgba(106, 90, 205, 0.3),
+                0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            min-height: 120px;
+            justify-content: center;
+        }
+
+        .main-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .main-btn:hover::before {
+            left: 100%;
+        }
+
+        .main-btn:hover {
+            background: linear-gradient(135deg, #8A2BE2, #6A5ACD);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow:
+                0 15px 35px rgba(106, 90, 205, 0.4),
+                0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-icon {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        .achievements-btn {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .achievements-btn:hover {
+            background: linear-gradient(135deg, #FF8E53, #FF6B6B);
+        }
+
+        .leaderboard-btn {
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .leaderboard-btn:hover {
+            background: linear-gradient(135deg, #44A08D, #4ECDC4);
+        }
+
+        .side-elements {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 2rem;
+            gap: 2rem;
+        }
+
+        .side-card {
+            background: linear-gradient(135deg, #ffffff, #f8f7ff);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 2px solid rgba(106, 90, 205, 0.1);
+            box-shadow:
+                0 8px 25px rgba(106, 90, 205, 0.15),
+                0 2px 4px rgba(0, 0, 0, 0.05);
+            width: 48%;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .side-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #6A5ACD, #8A2BE2);
+        }
+
+        .side-card:hover {
+            transform: translateY(-5px);
+            box-shadow:
+                0 12px 30px rgba(106, 90, 205, 0.2),
+                0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .side-card h3 {
+            color: #6A5ACD;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .side-card p {
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .progress-ring {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .progress-circle {
+            fill: none;
+            stroke: url(#progressGradient);
+            stroke-width: 6;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dasharray 1s ease;
+        }
+
+        .progress-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #6A5ACD;
+            margin-bottom: 0.5rem;
+        }
+
+        .bottom-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .bottom-btn {
+            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(106, 90, 205, 0.3);
+        }
+
+        .bottom-btn:hover {
+            background: linear-gradient(135deg, #8A2BE2, #6A5ACD);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(106, 90, 205, 0.4);
+        }
+
+        .floating-element {
+            position: absolute;
+            z-index: 0;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+        }
+
+        .floating-1 {
+            top: 15%;
+            left: 8%;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
+            border-radius: 20px;
+            opacity: 0.8;
+            filter: blur(0.5px);
+        }
+
+        .floating-2 {
+            bottom: 25%;
+            right: 10%;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            border-radius: 50%;
+            opacity: 0.7;
+            filter: blur(0.5px);
+            animation-delay: -2s;
+        }
+
+        .floating-3 {
+            top: 60%;
+            left: 12%;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            border-radius: 10px;
+            opacity: 0.6;
+            filter: blur(0.5px);
+            animation-delay: -4s;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+            .header h1 {
+                font-size: 2rem;
+            }
+            .header p {
+                font-size: 1rem;
+            }
+            .student-avatar {
+                width: 120px;
+                height: 120px;
+            }
+            .student-name {
+                font-size: 1.5rem;
+            }
+            .student-group {
+                font-size: 1rem;
+                padding: 0.6rem 1.2rem;
+            }
+            .main-buttons {
+                grid-template-columns: 1fr;
+                gap: 1.2rem;
+            }
+            .main-btn {
+                padding: 1.5rem;
+                font-size: 1.1rem;
+                min-height: 100px;
+            }
+            .btn-icon {
+                font-size: 1.8rem;
+            }
+            .student-stats {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .side-elements {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .side-card {
+                width: 100%;
+                padding: 1.5rem;
+            }
+            .bottom-buttons {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+            .floating-element {
+                display: none;
+            }
+            .university-logo {
+                max-height: 80px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            .student-profile {
+                padding: 2rem 1.5rem;
+            }
+            .student-avatar {
+                width: 100px;
+                height: 100px;
+            }
+            .student-name {
+                font-size: 1.3rem;
+            }
+            .main-btn {
+                padding: 1.2rem;
+                font-size: 1rem;
+            }
+            .btn-icon {
+                font-size: 1.6rem;
+            }
+            .university-logo {
+                max-height: 70px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- В начало body добавьте кнопку выхода -->
+<a href="index.html" class="logout-button" onclick="logout()">🚪 Выйти</a>
+
+<!-- Стили для кнопки выхода -->
+<style>
+.logout-button {
+    position: fixed;
+    top: 2rem;
+    left: 2rem;
+    background: rgba(255, 107, 107, 0.9);
+    color: white;
+    border: 2px solid #FF6B6B;
+    padding: 12px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    cursor: pointer;
+}
+
+.logout-button:hover {
+    background: rgba(255, 107, 107, 1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+</style>
+    <div class="pattern-bg"></div>
+
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+    <div class="container">
+        <div class="header">
+            <img src="https://i.ibb.co/bgJP6g6L/uuk.png" alt="Уфимский университет науки и технологий" class="university-logo">
+            <h1>Студенческий портал</h1>
+            <p>Добро пожаловать в личный кабинет</p>
+        </div>
+
+        <div class="main-content">
+            <div class="student-profile">
+                <img id="userAvatar" class="student-avatar">
+                <div class="student-id" id="userId">ID: Загрузка...</div>
+                <div class="student-name" id="userName">Загрузка...</div>
+                <div class="student-group" id="userGroup">Группа: ...</div>
+
+                <div class="student-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Место в рейтинге</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Общие очки</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Hard Skills</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Soft Skills</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-buttons">
+                <a href="schedule.html" class="main-btn">
+                    <div class="btn-icon">📅</div>
+                    <div>Расписание</div>
+                </a>
+                <a href="courses.html" class="main-btn">
+                    <div class="btn-icon">📚</div>
+                    <div>Курсы</div>
+                </a>
+                <a href="achievements.html" class="main-btn achievements-btn">
+                    <div class="btn-icon">⭐</div>
+                    <div>Достижения</div>
+                </a>
+                <a href="leaderboard.html" class="main-btn leaderboard-btn">
+                    <div class="btn-icon">🏆</div>
+                    <div>Топ студентов</div>
+                </a>
+            </div>
+
+            <div class="side-elements">
+                <div class="side-card">
+                    <svg class="progress-ring" viewBox="0 0 36 36">
+                        <defs>
+                            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#6A5ACD" />
+                                <stop offset="100%" stop-color="#8A2BE2" />
+                            </linearGradient>
+                        </defs>
+                        <circle class="progress-circle" stroke-dasharray="75, 100" cx="18" cy="18" r="16" />
+                    </svg>
+                    <div class="progress-value">75%</div>
+                    <h3>Прогресс обучения</h3>
+                    <p>Завершено 75% курсов текущего семестра</p>
+                </div>
+                <div class="side-card">
+                    <div class="btn-icon">⚡</div>
+                    <div class="progress-value">0</div>
+                    <h3>Активность</h3>
+                    <p>Выполненных заданий на этой неделе</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-buttons">
+            <a href="https://t.me/SUD_UUST_TG_bot" class="bottom-btn">Обратная связь</a>
+            <a href="answer.html" class="bottom-btn">Частые вопросы</a>
+           
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Получаем данные пользователя из localStorage
+            const userData = JSON.parse(localStorage.getItem('currentUser'));
+            
+            if (!userData) {
+                // Если нет данных - перенаправляем на вход
+                alert('Пожалуйста, войдите в систему');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            console.log('Загружен пользователь:', userData);
+
+            // Отображаем данные пользователя
+            const userAvatar = document.getElementById('userAvatar');
+            const userId = document.getElementById('userId');
+            const userName = document.getElementById('userName');
+            const userGroup = document.getElementById('userGroup');
+
+            if (userAvatar) {
+                userAvatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=6A5ACD`;
+                userAvatar.alt = userData.name;
+            }
+
+            if (userId) {
+                userId.textContent = `ID: ${userData.id}`;
+            }
+
+            if (userName) {
+                userName.textContent = userData.name;
+            }
+
+            if (userGroup) {
+                userGroup.textContent = `Группа: ТОП-104Б`;
+            }
+
+            // Обновляем все элементы с классом student-name и student-id на странице
+            document.querySelectorAll('.student-name').forEach(el => {
+                el.textContent = userData.name;
+            });
+
+            document.querySelectorAll('.student-id').forEach(el => {
+                el.textContent = `ID: ${userData.id}`;
+            });
+
+            // Обновляем все аватары
+            document.querySelectorAll('.student-avatar').forEach(avatar => {
+                avatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=6A5ACD`;
+                avatar.alt = userData.name;
+            });
+        });
+
+        // Функция выхода
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

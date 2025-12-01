@@ -1,0 +1,1510 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расписание</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body 
+        <?php include 'auth-header.php'; ?>
+        {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            padding: 30px 20px 20px 20px;
+        }
+
+        .pattern-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+            background: radial-gradient(circle at 20% 80%, rgba(106, 90, 205, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.15) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(147, 112, 219, 0.1) 0%, transparent 50%), linear-gradient(45deg, transparent 48%, rgba(106, 90, 205, 0.03) 48%, rgba(106, 90, 205, 0.03) 52%, transparent 52%), linear-gradient(-45deg, transparent 48%, rgba(138, 43, 226, 0.03) 48%, rgba(138, 43, 226, 0.03) 52%, transparent 52%);
+            background-size: 60px 60px;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 95%;
+        }
+
+        .desktop-interface {
+            display: block;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            height: 80px;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(106, 90, 205, 0.9);
+            color: white;
+            border: 2px solid #6A5ACD;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(106, 90, 205, 0.3);
+        }
+
+            .back-button:hover {
+                background: rgba(106, 90, 205, 1);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(106, 90, 205, 0.4);
+            }
+
+        .title-container {
+            background: #6f53d0;
+            border-radius: 12px;
+            padding: 15px 30px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.3);
+            border: 2px solid #6350c0;
+            flex-grow: 0;
+            margin: 0 20px;
+            width: auto;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 0;
+        }
+
+        /* Стили для кнопок переключения расписания */
+        .schedule-toggle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .schedule-btn {
+            background: rgba(111, 83, 208, 0.1);
+            border: 2px solid #6f53d0;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #6f53d0;
+            box-shadow: 0 4px 12px rgba(111, 83, 208, 0.2);
+        }
+
+            .schedule-btn:hover {
+                background: rgba(111, 83, 208, 0.2);
+                transform: translateY(-2px);
+            }
+
+            .schedule-btn.active {
+                background: #6f53d0;
+                color: white;
+                box-shadow: 0 6px 20px rgba(111, 83, 208, 0.4);
+            }
+
+        .week-indicator {
+            background: rgba(111, 83, 208, 0.1);
+            border-radius: 8px;
+            padding: 8px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(111, 83, 208, 0.2);
+            backdrop-filter: blur(5px);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 50px;
+        }
+
+        .week-number {
+            font-size: 16px;
+            font-weight: 600;
+            color: #6f53d0;
+            text-transform: uppercase;
+        }
+
+        .navigation-right {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #6f53d0, #8a2be2);
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.3);
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: buttonPulse 2s ease-in-out infinite;
+            position: relative;
+        }
+
+            .nav-button.disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                animation: none;
+            }
+
+        @keyframes buttonPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 4px 15px rgba(111, 83, 208, 0.3);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 6px 20px rgba(111, 83, 208, 0.4);
+            }
+        }
+
+        .nav-button:hover:not(.disabled) {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(111, 83, 208, 0.5);
+            background: linear-gradient(135deg, #8a2be2, #6f53d0);
+            animation: none;
+        }
+
+        .nav-button:active:not(.disabled) {
+            transform: translateY(0px) scale(1);
+            box-shadow: 0 2px 10px rgba(111, 83, 208, 0.4);
+            transition: all 0.1s ease;
+        }
+
+        .schedule-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 10px;
+            box-shadow: 0 10px 30px rgba(111, 83, 208, 0.15);
+            border: 2px solid rgba(111, 83, 208, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .schedule-header {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .day-column {
+            background: linear-gradient(135deg, #6f53d0, #8a2be2);
+            color: white;
+            padding: 15px 10px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.3);
+            animation: colorShift 3s ease-in-out infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes colorShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .day-date {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+            font-weight: normal;
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+        }
+
+        .day-schedule {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 15px;
+            min-height: 400px;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.1);
+            border: 2px solid rgba(111, 83, 208, 0.05);
+            backdrop-filter: blur(5px);
+        }
+
+        .lesson {
+            background: #8577ff;
+            color: rgba(255, 255, 255, 0.98);
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(111, 83, 208, 0.15);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(111, 83, 208, 0.2);
+        }
+
+            .lesson:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(111, 83, 208, 0.25);
+                background: #7869f0;
+                color: white;
+            }
+
+        .lesson-time {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 12px;
+            opacity: 0.98;
+            color: rgba(255, 255, 255, 0.98);
+        }
+
+        .lesson-name {
+            font-weight: 600;
+            margin-bottom: 3px;
+            opacity: 0.98;
+            color: rgba(255, 255, 255, 0.98);
+        }
+
+        .lesson-room {
+            font-size: 11px;
+            opacity: 0.95;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .empty-day {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6f53d0;
+            font-style: italic;
+            height: 100%;
+            font-size: 16px;
+        }
+
+        .mobile-interface {
+            display: none;
+        }
+
+        .mobile-top-navigation {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px 20px;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.15);
+            position: relative;
+        }
+
+        .mobile-back-btn {
+            background: #6f53d0;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.3);
+            transition: all 0.3s ease;
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+            .mobile-back-btn:hover {
+                transform: translateY(-52%);
+                box-shadow: 0 6px 20px rgba(111, 83, 208, 0.4);
+            }
+
+        .mobile-title-section {
+            flex-grow: 1;
+            text-align: center;
+        }
+
+            .mobile-title-section h1 {
+                color: #6f53d0;
+                font-size: 24px;
+                margin: 0;
+            }
+
+        .mobile-week-navigation {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .mobile-nav-arrow {
+            background: linear-gradient(135deg, #6f53d0, #8a2be2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.3);
+            transition: all 0.3s ease;
+        }
+
+            .mobile-nav-arrow:hover:not(.disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(111, 83, 208, 0.4);
+            }
+
+            .mobile-nav-arrow.disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+        .mobile-week-counter {
+            font-weight: 600;
+            color: #6f53d0;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .mobile-days-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.15);
+        }
+
+        .mobile-days-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .mobile-day-btn {
+            background: linear-gradient(135deg, #6f53d0, #8a2be2);
+            border: none;
+            border-radius: 10px;
+            padding: 15px 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.3);
+        }
+
+            .mobile-day-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(111, 83, 208, 0.4);
+            }
+
+            .mobile-day-btn.active {
+                background: linear-gradient(135deg, #8a2be2, #6f53d0);
+                transform: translateY(-2px);
+            }
+
+        .mobile-day-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .mobile-day-date {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .mobile-schedule-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 300px;
+            box-shadow: 0 4px 15px rgba(111, 83, 208, 0.15);
+        }
+
+        .mobile-day-schedule-title {
+            text-align: center;
+            color: #6f53d0;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .mobile-lesson {
+            background: #8577ff;
+            color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(111, 83, 208, 0.15);
+        }
+
+        .mobile-lesson-time {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .mobile-lesson-name {
+            font-weight: 600;
+            margin-bottom: 3px;
+            font-size: 16px;
+        }
+
+        .mobile-lesson-room {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .mobile-empty-day {
+            text-align: center;
+            color: #6f53d0;
+            font-style: italic;
+            padding: 40px 20px;
+            font-size: 18px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 1200px) {
+            .container {
+                width: 98%;
+            }
+
+            .schedule-header,
+            .schedule-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .title {
+                font-size: 28px;
+            }
+
+            .title-container {
+                padding: 12px 25px;
+                min-width: 180px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .desktop-interface {
+                display: none;
+            }
+
+            .mobile-interface {
+                display: block;
+            }
+
+            body {
+                padding: 25px 15px 15px 15px;
+            }
+
+            .mobile-days-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .mobile-day-name {
+                font-size: 12px;
+            }
+
+            .mobile-top-navigation {
+                flex-direction: row;
+                padding: 12px 15px;
+            }
+
+            .mobile-back-btn {
+                position: static;
+                transform: none;
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+
+            .mobile-week-navigation {
+                position: static;
+                transform: none;
+            }
+
+            .mobile-title-section h1 {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 20px 10px 10px 10px;
+            }
+
+            .mobile-days-container {
+                grid-template-columns: 1fr;
+            }
+
+            .mobile-week-navigation {
+                gap: 10px;
+            }
+
+            .mobile-nav-arrow {
+                width: 35px;
+                height: 35px;
+            }
+
+            .mobile-top-navigation {
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+            }
+
+            .mobile-back-btn {
+                order: 1;
+            }
+
+            .mobile-title-section {
+                order: 3;
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            .mobile-week-navigation {
+                order: 2;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="pattern-bg"></div>
+
+    <div class="container">
+        <div class="desktop-interface">
+            <div class="header">
+                <a href='main.html' class="back-button">← Назад</a>
+                <div class="title-container">
+                    <h1 class="title">Расписание</h1>
+                </div>
+                <div style="width: 100px;"></div>
+            </div>
+
+            <!-- Кнопки переключения между учебным и внеучебным расписанием -->
+            <div class="schedule-toggle">
+                <button class="schedule-btn active" id="academicBtn">Учебное расписание</button>
+                <button class="schedule-btn" id="extracurricularBtn">Внеучебные мероприятия</button>
+            </div>
+
+            <div class="week-indicator">
+                <div class="week-number" id="weekNumber">Неделя 1</div>
+                <div class="navigation-right">
+                    <button class="nav-button" id="prevWeek">←</button>
+                    <button class="nav-button" id="nextWeek">→</button>
+                </div>
+            </div>
+
+            <div class="schedule-container">
+                <div class="schedule-header">
+                    <div class="day-column">
+                        Понедельник
+                        <div class="day-date" id="date-mon"></div>
+                    </div>
+                    <div class="day-column">
+                        Вторник
+                        <div class="day-date" id="date-tue"></div>
+                    </div>
+                    <div class="day-column">
+                        Среда
+                        <div class="day-date" id="date-wed"></div>
+                    </div>
+                    <div class="day-column">
+                        Четверг
+                        <div class="day-date" id="date-thu"></div>
+                    </div>
+                    <div class="day-column">
+                        Пятница
+                        <div class="day-date" id="date-fri"></div>
+                    </div>
+                    <div class="day-column">
+                        Суббота
+                        <div class="day-date" id="date-sat"></div>
+                    </div>
+                </div>
+
+                <div class="schedule-grid" id="scheduleGrid">
+                </div>
+            </div>
+        </div>
+
+        <div class="mobile-interface">
+            <div class="mobile-top-navigation">
+                <a href='main.html' class="mobile-back-btn" style="text-decoration: none;">← Назад</a>
+                <div class="mobile-title-section">
+                    <h1>Расписание</h1>
+                </div>
+                <div class="mobile-week-navigation">
+                    <button class="mobile-nav-arrow mobile-prev-week">←</button>
+                    <span class="mobile-week-counter">Неделя 1</span>
+                    <button class="mobile-nav-arrow mobile-next-week">→</button>
+                </div>
+            </div>
+
+            <!-- Кнопки переключения для мобильной версии -->
+            <div class="schedule-toggle">
+                <button class="schedule-btn active" id="mobileAcademicBtn">Учебное</button>
+                <button class="schedule-btn" id="mobileExtracurricularBtn">Внеучебное</button>
+            </div>
+
+            <div class="mobile-days-panel">
+                <div class="mobile-days-container">
+                    <button class="mobile-day-btn" data-day="0">
+                        <span class="mobile-day-name">Понедельник</span>
+                        <span class="mobile-day-date" id="mobile-date-mon">1.9</span>
+                    </button>
+                    <button class="mobile-day-btn" data-day="1">
+                        <span class="mobile-day-name">Вторник</span>
+                        <span class="mobile-day-date" id="mobile-date-tue">2.9</span>
+                    </button>
+                    <button class="mobile-day-btn" data-day="2">
+                        <span class="mobile-day-name">Среда</span>
+                        <span class="mobile-day-date" id="mobile-date-wed">3.9</span>
+                    </button>
+                    <button class="mobile-day-btn" data-day="3">
+                        <span class="mobile-day-name">Четверг</span>
+                        <span class="mobile-day-date" id="mobile-date-thu">4.9</span>
+                    </button>
+                    <button class="mobile-day-btn" data-day="4">
+                        <span class="mobile-day-name">Пятница</span>
+                        <span class="mobile-day-date" id="mobile-date-fri">5.9</span>
+                    </button>
+                    <button class="mobile-day-btn" data-day="5">
+                        <span class="mobile-day-name">Суббота</span>
+                        <span class="mobile-day-date" id="mobile-date-sat">6.9</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mobile-schedule-container" id="mobileScheduleContainer">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const scheduleData = {
+            '2025-09-01': [
+                { time: '9:00-10:30', name: 'Линейка для первокурсников', room: 'Площадь' },
+            ],
+            '2025-09-02': [
+                { time: '10:00', name: 'УУНиТ Старт лекция', room: 'Ауд. 6-303' },
+                { time: '12:45', name: 'Презентация кружков', room: '7-215' }
+            ],
+            '2025-09-03': [
+                { time: '9:00-10:30', name: 'Лекция профкома в рамках УУНиТ старта', room: '1-307' },
+            ],
+            '2025-09-05': [
+                { time: '9:00-10:30', name: 'Заключительная лекция УУНиТ старта', room: '6-402' },
+            ],
+            '2025-09-08': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '7-205' },
+                { time: '9:35-11:05', name: 'Семинар по математическому анализу', room: '6-402' },
+                { time: '11:35-13:05', name: 'Алгебра и геометрия', room: '7-215' }
+            ],
+            '2025-09-09': [
+                { time: '9:00-10:30', name: 'Алгебра', room: '7-303' },
+                { time: '11:00-12:30', name: 'ОРГ', room: '9-201' }
+            ],
+            '2025-09-10': [
+                { time: '8:30-10:00', name: 'Программирование', room: '6-105' },
+                { time: '10:15-11:45', name: 'Английский язык', room: '1-304' }
+            ],
+            '2025-09-11': [
+                { time: '9:00-10:30', name: 'Физкультура', room: 'Спортзал' },
+                { time: '11:00-12:30', name: 'Математический анализ', room: '6-402' }
+            ],
+            '2025-09-12': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '7-205' },
+                { time: '9:35-11:05', name: 'Семинар по математическому анализу', room: '6-402' },
+                { time: '11:35-13:05', name: 'Алгебра и геометрия', room: '7-215' }
+            ],
+            '2025-09-13': [
+                { time: '9:00-10:30', name: 'Семинар по программированию', room: '5-105' }
+            ],
+            '2025-09-15': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '6-402' },
+                { time: '9:35-11:05', name: 'Программирование', room: '7-105' },
+            ],
+            '2025-09-16': [
+                { time: '9:00-10:30', name: 'Алгебра и геометрия', room: '5-303' },
+                { time: '11:00-12:30', name: 'ОРГ', room: '3-201' }
+            ],
+            '2025-09-17': [
+                { time: '8:30-10:00', name: 'Английский язык', room: '1-304' },
+                { time: '10:15-11:45', name: 'Физкультура', room: 'Спортзал' }
+            ],
+            '2025-09-18': [
+                { time: '9:00-10:30', name: 'Математический анализ', room: '6-402' },
+                { time: '11:00-12:30', name: 'Программирование', room: '7-105' }
+            ],
+            '2025-09-19': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '7-205' },
+                { time: '9:35-11:05', name: 'Семинар по математическому анализу', room: '6-402' },
+                { time: '11:35-13:05', name: 'Алгебра и геометрия', room: '7-215' }
+            ],
+            '2025-09-20': [
+                { time: '9:00-10:30', name: 'Семинар по дискретной математике', room: 'Ауд. 301' }
+            ],
+            '2025-09-22': [],
+            '2025-09-23': [
+                { time: '9:00-10:30', name: 'Алгебра и геометрия', room: '1-303' },
+                { time: '11:00-12:30', name: 'ОРГ', room: '7-201' }
+            ],
+            '2025-09-24': [],
+            '2025-09-25': [
+                { time: '9:00-10:30', name: 'Математический анализ', room: '1-402' },
+                { time: '11:00-12:30', name: 'Программирование', room: '7-105' }
+            ],
+            '2025-09-26': [],
+            '2025-09-27': [],
+            '2025-09-29': [
+                { time: '8:00-9:30', name: 'Программирование', room: '1-105' },
+                { time: '9:35-11:05', name: 'Математический анализ', room: '7-402' },
+            ],
+            '2025-09-30': [
+                { time: '9:00-10:30', name: 'Алгебра и геометрия', room: '7-303' },
+                { time: '11:00-12:30', name: 'ОРГ', room: '1-201' }
+            ],
+
+            '2025-10-01': [
+                { time: '8:30-10:00', name: 'Английский язык', room: '1-304' },
+                { time: '10:15-11:45', name: 'Физкультура', room: 'Спортзал' }
+            ],
+            '2025-10-02': [
+                { time: '9:00-10:30', name: 'Математический анализ', room: '6-402' },
+                { time: '11:00-12:30', name: 'Программирование', room: '7-105' }
+            ],
+            '2025-10-03': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '7-205' },
+                { time: '9:35-11:05', name: 'Семинар по математическому анализу', room: '6-402' },
+                { time: '11:35-13:05', name: 'Алгебра и геометрия', room: '7-215' }
+            ],
+            '2025-10-04': [
+                { time: '9:00-10:30', name: 'Дискретная математика', room: '7-301' }
+            ],
+            '2025-10-06': [
+                { time: '8:00-9:30', name: 'Программирование', room: '7-105' },
+                { time: '9:35-11:05', name: 'Математический анализ', room: '6-402' },
+            ],
+            '2025-10-07': [],
+            '2025-10-08': [
+                { time: '8:30-10:00', name: 'Английский язык', room: '1-304' },
+                { time: '10:15-11:45', name: 'Физкультура', room: 'Спортзал' }
+            ],
+            '2025-10-09': [
+                { time: '9:00-10:30', name: 'Математический анализ', room: '7-402' },
+                { time: '11:00-12:30', name: 'Программирование', room: '1-105' }
+            ],
+            '2025-10-10': [],
+            '2025-10-11': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '7-205' },
+                { time: '9:35-11:05', name: 'Семинар по математическому анализу', room: '6-402' },
+                { time: '11:35-13:05', name: 'Алгебра и геометрия', room: '7-215' }
+            ],
+            '2025-10-13': [
+                { time: '8:00-9:30', name: 'Программирование', room: '1-105' },
+                { time: '9:35-11:05', name: 'Математический анализ', room: '6-402' },
+            ],
+            '2025-10-14': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '7-205' },
+                { time: '9:35-11:05', name: 'Семинар по математическому анализу', room: '6-402' },
+                { time: '11:35-13:05', name: 'Алгебра и геометрия', room: '7-215' }
+            ],
+            '2025-10-15': [
+                { time: '8:30-10:00', name: 'Английский язык', room: '1-304' },
+                { time: '10:15-11:45', name: 'Физкультура', room: 'Спортзал' }
+            ],
+            '2025-10-16': [
+                { time: '9:00-10:30', name: 'Математический анализ', room: '8-402' },
+                { time: '11:00-12:30', name: 'Программирование', room: '1-105' }
+            ],
+            '2025-10-17': [
+                { time: '12:00-13:30', name: 'Алгебра', room: '1-303' }
+            ],
+            '2025-10-18': [],
+            '2025-10-20': [
+                { time: '8:00-9:30', name: '1 пара: Мат.анализ', room: 'Главный корпус' },
+                { time: '9:35-11:05', name: '2 пара: Алгебра и геометрия', room: '2-301' },
+                { time: '11:35-13:05', name: '3 пара: Заслуженный обед', room: 'Столовая' }
+            ],
+            '2025-10-21': [],
+            '2025-10-22': [
+                { time: '8:30-10:00', name: 'Математический анализ', room: 'Ауд. 402' },
+                { time: '10:15-11:45', name: 'Дискретная математика', room: 'Ауд. 301' }
+            ],
+            '2025-10-23': [
+                { time: '10:00-16:00', name: 'Медкомиссия', room: 'Медпункт' }
+            ],
+            '2025-10-24': [
+                { time: '9:00-10:30', name: 'Английский язык', room: 'Ауд. 304' },
+                { time: '11:00-12:30', name: 'Физкультура', room: 'Спортзал' }
+            ],
+            '2025-10-25': [
+                { time: '9:00-10:30', name: 'Пары МФТИ', room: 'Корпус МФТИ' },
+            ],
+            '2025-10-27': [],
+            '2025-10-28': [
+                { time: '8:00-9:30', name: 'Мат.анализ', room: 'Ауд. 301' },
+                { time: '9:35-11:05', name: 'Алгебра', room: 'Ауд. 302' },
+            ],
+            '2025-10-29': [
+                { time: '9:00-10:30', name: 'Программирование', room: 'Комп. класс 105' },
+                { time: '11:00-12:30', name: 'Базы данных', room: 'Комп. класс 107' }
+            ],
+            '2025-10-30': [
+                { time: '8:30-10:00', name: 'Дискретная математика', room: 'Ауд. 301' },
+                { time: '10:15-11:45', name: 'Семинар по алгебре', room: 'Ауд. 303' }
+            ],
+            '2025-10-31': [],
+
+            // Ноябрь 2025
+            '2025-11-01': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '7-205' },
+                { time: '9:35-11:05', name: 'Семинар по математическому анализу', room: '6-402' },
+                { time: '11:35-13:05', name: 'Алгебра и геометрия', room: '7-215' }
+            ],
+            '2025-11-03': [],
+            '2025-11-04': [
+                { time: '9:00-10:30', name: 'Математический анализ', room: 'Ауд. 401' },
+                { time: '11:00-12:30', name: 'Семинар по алгебре и геометрии', room: 'Ауд. 402' },
+            ],
+            '2025-11-05': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '7-205' },
+                { time: '9:35-11:05', name: 'Семинар по математическому анализу', room: '6-402' },
+                { time: '11:35-13:05', name: 'Алгебра и геометрия', room: '7-215' }
+            ],
+            '2025-11-06': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '7-205' },
+                { time: '9:35-11:05', name: 'Семинар по математическому анализу', room: '6-402' },
+                { time: '11:35-13:05', name: 'Семинар Алгебра и геометрия', room: '7-215' }
+            ],
+            '2025-11-07': [
+                { time: '9:00-10:30', name: 'Мат.анализ', room: 'Ауд. 301' },
+            ],
+            '2025-11-08': [
+                { time: '8:00-9:30', name: 'Физкультура', room: 'Спортзал' },
+                { time: '10:00-11:30', name: 'Английский', room: 'Ауд. 304' }
+            ],
+            '2025-11-10': [
+                { time: '8:00-9:30', name: 'Программирование', room: 'Комп. класс 105' },
+                { time: '9:35-11:05', name: 'Математический анализ', room: 'Ауд. 402' },
+            ],
+            '2025-11-11': [
+                { time: '9:00-10:30', name: 'Алгебра', room: 'Ауд. 303' },
+                { time: '11:00-12:30', name: 'ОРГ', room: 'Ауд. 201' }
+            ],
+            '2025-11-12': [
+                { time: '8:30-10:00', name: 'Английский язык', room: 'Ауд. 304' },
+                { time: '10:15-11:45', name: 'Физкультура', room: 'Спортзал' }
+            ],
+            '2025-11-13': [
+                { time: '9:00-10:30', name: 'Математический анализ', room: 'Ауд. 402' },
+                { time: '11:00-12:30', name: 'Программирование', room: 'Комп. класс 105' }
+            ],
+            '2025-11-14': [
+                { time: '12:00-13:30', name: 'Алгебра', room: 'Ауд. 303' }
+            ],
+            '2025-11-15': [
+                { time: '9:00-10:30', name: 'ОИТ', room: 'Ауд. 301' }
+            ],
+            '2025-11-17': [
+                { time: '8:00-9:30', name: 'Программирование', room: 'Комп. класс 105' },
+                { time: '9:35-11:05', name: 'Математический анализ', room: 'Ауд. 402' },
+            ],
+            '2025-11-18': [
+                { time: '9:00-10:30', name: 'Алгебра', room: 'Ауд. 303' },
+                { time: '11:00-12:30', name: 'ОРГ', room: 'Ауд. 201' }
+            ],
+            '2025-11-19': [
+                { time: '8:30-10:00', name: 'Английский язык', room: 'Ауд. 304' },
+                { time: '10:15-11:45', name: 'Физкультура', room: 'Спортзал' }
+            ],
+            '2025-11-20': [
+                { time: '9:00-10:30', name: 'Математический анализ', room: 'Ауд. 402' },
+                { time: '11:00-12:30', name: 'Программирование', room: 'Комп. класс 105' }
+            ],
+            '2025-11-21': [
+                { time: '12:00-13:30', name: 'Алгебра и геометрия', room: 'Ауд. 303' }
+            ],
+            '2025-11-22': [],
+            '2025-11-24': [
+                { time: '8:00-9:30', name: 'Программирование', room: 'Комп. класс 105' },
+                { time: '9:35-11:05', name: 'Математический анализ', room: 'Ауд. 402' },
+            ],
+            '2025-11-25': [
+                { time: '9:00-10:30', name: 'Алгебра и геометрия', room: 'Ауд. 303' },
+                { time: '11:00-12:30', name: 'ОРГ', room: 'Ауд. 201' }
+            ],
+            '2025-11-26': [
+                { time: '8:30-10:00', name: 'Английский язык', room: 'Ауд. 304' },
+                { time: '10:15-11:45', name: 'Физкультура', room: 'Спортзал' }
+            ],
+            '2025-11-27': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '7-205' },
+                { time: '9:35-11:05', name: 'Семинар по дискретной математеке', room: '6-402' },
+                { time: '11:35-13:05', name: 'Алгебра и геометрия', room: '7-215' }
+            ],
+            '2025-11-28': [
+                { time: '12:00-13:30', name: 'Алгебра и геометрия', room: 'Ауд. 303' }
+            ],
+            '2025-11-29': [],
+
+            // Декабрь 2025
+            '2025-12-01': [
+                { time: '8:00-9:30', name: 'Программирование', room: 'Комп. класс 105' },
+                { time: '9:35-11:05', name: 'Математический анализ', room: 'Ауд. 402' },
+            ],
+            '2025-12-02': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '7-205' },
+                { time: '9:35-11:05', name: 'Семинар по математическому анализу', room: '6-402' },
+                { time: '11:35-13:05', name: 'Алгебра и геометрия', room: '7-215' }
+            ],
+            '2025-12-03': [
+                { time: '8:30-10:00', name: 'Английский язык', room: 'Ауд. 304' },
+                { time: '10:15-11:45', name: 'Физкультура', room: 'Спортзал' }
+            ],
+            '2025-12-04': [
+                { time: '9:00-10:30', name: 'Математический анализ', room: 'Ауд. 402' },
+                { time: '11:00-12:30', name: 'Программирование', room: 'Комп. класс 105' }
+            ],
+            '2025-12-05': [
+                { time: '12:00-13:30', name: 'Алгебра', room: 'Ауд. 303' }
+            ],
+            '2025-12-06': [
+                { time: '9:00-10:30', name: 'Семинар по алгебре и геометрии', room: 'Ауд. 301' }
+            ],
+            '2025-12-08': [
+                { time: '8:00-9:30', name: 'Программирование', room: 'Комп. класс 105' },
+                { time: '9:35-11:05', name: 'Математический анализ', room: 'Ауд. 402' },
+            ],
+            '2025-12-09': [
+                { time: '9:00-10:30', name: 'Алгебра и геометрия', room: 'Ауд. 303' },
+                { time: '11:00-12:30', name: 'ОРГ', room: 'Ауд. 201' }
+            ],
+            '2025-12-10': [
+                { time: '8:30-10:00', name: 'Английский язык', room: 'Ауд. 304' },
+                { time: '10:15-11:45', name: 'Физкультура', room: 'Спортзал' }
+            ],
+            '2025-12-11': [
+                { time: '9:00-10:30', name: 'Математический анализ', room: 'Ауд. 402' },
+                { time: '11:00-12:30', name: 'Программирование', room: 'Комп. класс 105' }
+            ],
+            '2025-12-12': [
+                { time: '8:00-9:30', name: 'Математический анализ', room: '7-205' },
+                { time: '9:35-11:05', name: 'Семинар по математическому анализу', room: '6-402' },
+                { time: '11:35-13:05', name: 'Алгебра и геометрия', room: '7-215' }
+            ],
+            '2025-12-13': [],
+            '2025-12-15': [
+                { time: '8:00-9:30', name: 'Программирование', room: 'Комп. класс 105' },
+                { time: '9:35-11:05', name: 'Математический анализ', room: 'Ауд. 402' },
+            ],
+            '2025-12-16': [
+                { time: '9:00-10:30', name: 'Дискретная математика', room: 'Ауд. 303' },
+                { time: '11:00-12:30', name: 'ОРГ', room: 'Ауд. 201' }
+            ],
+            '2025-12-17': [
+                { time: '10:15-11:45', name: 'Физкультура', room: 'Спортзал' }
+            ],
+            '2025-12-18': [
+                { time: '11:00-12:30', name: 'Программирование', room: 'Комп. класс 105' }
+            ],
+            '2025-12-19': [
+                { time: '12:00-13:30', name: 'Алгебра', room: 'Ауд. 303' }
+            ],
+            '2025-12-20': [],
+            '2025-12-22': [
+                { time: '8:00-9:30', name: 'Зачет: Программирование', room: 'Комп. класс 105' },
+                { time: '10:00-11:30', name: 'Зачет: Математический анализ', room: 'Ауд. 402' }
+            ],
+            '2025-12-23': [
+                { time: '9:00-10:30', name: 'Зачет: Дискретная математика', room: 'Лаб. 215' },
+                { time: '11:00-12:30', name: 'Зачет: Алгебра', room: 'Ауд. 303' }
+            ],
+            '2025-12-24': [
+                { time: '10:00-11:30', name: 'Зачет: ОРГ', room: 'Ауд. 301' }
+            ],
+            '2025-12-25': [
+                { time: '9:00-10:30', name: 'Сессия', room: 'Главный корпус' }
+            ],
+            '2025-12-26': [
+                { time: '9:00-10:30', name: 'Сессия', room: 'Главный корпус' }
+            ],
+            '2025-12-27': [
+                { time: '9:00-10:30', name: 'Сессия', room: 'Главный корпус' }
+            ],
+            '2025-12-29': [],
+            '2025-12-30': [],
+            '2025-12-31': []
+        };
+
+        // Данные для внеучебных мероприятий
+        const extracurricularData = {
+            '2025-09-01': [
+                { time: '14:00-16:00', name: 'Организационное собрание студсовета', room: 'Актовый зал' },
+                { time: '17:00-19:00', name: 'STUDBIT: Воркшоп "Основы видеомонтажа"', room: 'Медиастудия' },
+            ],
+            '2025-09-04': [
+                { time: '18:00-20:00', name: 'Волонтерство: Подготовка к благотворительному сбору', room: 'Студенческий клуб' },
+            ],
+            '2025-09-06': [
+                { time: '15:00-18:00', name: 'Турнир по волейболу (отборочные игры)', room: 'Спортзал' },
+            ],
+            '2025-09-08': [
+                { time: '16:00-18:00', name: 'Собрание научного кружка', room: 'Ауд. 301' },
+                { time: '19:00-21:00', name: 'Анимеклуб: Просмотр и обсуждение', room: 'Ауд. 208' },
+            ],
+            '2025-09-11': [
+                { time: '17:00-19:00', name: 'STUDBIT: Фотопрогулка по кампусу', room: 'Сбор у главного входа' },
+            ],
+            '2025-09-13': [
+                { time: '12:00-16:00', name: 'Волонтерство: Городской субботник', room: 'Парк у кампуса' },
+                { time: '19:00-22:00', name: 'Кинопоказ под открытым небом: "Общество мертвых поэтов"', room: 'Внутренний двор' },
+            ],
+            '2025-09-15': [
+                { time: '17:00-19:00', name: 'Встреча литературного клуба', room: 'Библиотека' },
+            ],
+            '2025-09-18': [
+                { time: '18:00-20:00', name: 'STUDBIT: Мастер-класс по созданию контента', room: 'Медиастудия' },
+            ],
+            '2025-09-20': [
+                { time: '14:00-17:00', name: 'Чемпионат по баскетболу', room: 'Спортзал' },
+                { time: '19:00-21:00', name: 'Международный вечер: Культура Восточной Европы', room: 'Актовый зал' },
+            ],
+            '2025-09-22': [
+                { time: '19:00-21:00', name: 'Турнир по настольным играм', room: 'Студенческий клуб' },
+            ],
+            '2025-09-25': [
+                { time: '17:00-19:00', name: 'Анимеклуб: Тематическая вечеринка', room: 'Ауд. 208' },
+            ],
+            '2025-09-27': [
+                { time: '10:00-14:00', name: 'Волонтерство: Помощь приюту для животных', room: 'Городской приют' },
+                { time: '18:00-21:00', name: 'День европейских языков: Языковой марафон', room: 'Конференц-зал' },
+            ],
+            '2025-09-29': [
+                { time: '16:00-18:00', name: 'Собрание студенческого совета', room: 'Актовый зал' },
+            ],
+            '2025-10-02': [
+                { time: '18:00-20:00', name: 'STUDBIT: Воркшоп по звукорежиссуре', room: 'Медиастудия' },
+            ],
+            '2025-10-04': [
+                { time: '13:00-16:00', name: 'Футбольный турнир (полуфиналы)', room: 'Стадион' },
+                { time: '18:00-20:00', name: 'Киноклуб: Французское арт-хаус кино', room: 'Ауд. 305' },
+            ],
+            '2025-10-06': [
+                { time: '17:00-19:00', name: 'Мастер-класс по дизайну', room: 'Ауд. 303' },
+            ],
+            '2025-10-09': [
+                { time: '16:00-18:00', name: 'Волонтерство: Сбор вещей для нуждающихся', room: 'Студенческий клуб' },
+            ],
+            '2025-10-11': [
+                { time: '19:00-21:00', name: 'Кинопоказ от STUDBIT: "Начало" Кристофера Нолана', room: 'Актовый зал' },
+            ],
+            '2025-10-13': [
+                { time: '16:00-18:00', name: 'Собрание научного кружка', room: 'Ауд. 301' },
+            ],
+            '2025-10-16': [
+                { time: '18:00-20:00', name: 'Анимеклуб: Мастер-класс по рисованию манги', room: 'Ауд. 208' },
+            ],
+            '2025-10-18': [
+                { time: '15:00-18:00', name: 'Финалы турнира по волейболу', room: 'Спортзал' },
+                { time: '19:00-22:00', name: 'Осенний бал: Танцевальный вечер', room: 'Актовый зал' },
+            ],
+            '2025-10-20': [
+                { time: '19:00-21:00', name: 'Турнир по настольным играм', room: 'Студенческий клуб' },
+            ],
+            '2025-10-23': [
+                { time: '17:00-19:00', name: 'STUDBIT: Презентация студенческих проектов', room: 'Конференц-зал' },
+            ],
+            '2025-10-25': [
+                { time: '11:00-15:00', name: 'Волонтерство: Обучение пожилых работе с гаджетами', room: 'Комп. класс 105' },
+            ],
+            '2025-10-27': [
+                { time: '19:00-21:00', name: 'Клуб дебатов', room: 'Конференц-зал' },
+            ],
+            '2025-10-29': [
+                { time: '18:00-20:00', name: 'Анимеклуб: Косплей-вечеринка', room: 'Актовый зал' },
+            ],
+            '2025-10-31': [
+                { time: '19:00-22:00', name: 'Хэллоуинская вечеринка от STUDBIT', room: 'Актовый зал' },
+            ],
+            '2025-11-03': [
+                { time: '17:00-19:00', name: 'Собрание студенческого совета', room: 'Актовый зал' },
+            ],
+            '2025-11-04': [
+                { time: '18:00-20:00', name: 'День народного единства: Исторический квиз', room: 'Библиотека' },
+            ],
+            '2025-11-06': [
+                { time: '16:00-18:00', name: 'Волонтерство: Подготовка к благотворительному концерту', room: 'Актовый зал' },
+            ],
+            '2025-11-08': [
+                { time: '14:00-17:00', name: 'Чемпионат по настольному теннису', room: 'Спортзал' },
+                { time: '18:00-21:00', name: 'Кинопоказ: Фестиваль студенческих короткометражек', room: 'Актовый зал' },
+            ],
+            '2025-11-10': [
+                { time: '16:00-18:00', name: 'Собрание научного кружка', room: 'Ауд. 301' },
+            ],
+            '2025-11-13': [
+                { time: '18:00-20:00', name: 'STUDBIT: Мастер-класс по SMM', room: 'Медиастудия' },
+            ],
+            '2025-11-15': [
+                { time: '12:00-16:00', name: 'Благотворительный концерт в детском доме', room: 'Городской детский дом' },
+                { time: '18:00-20:00', name: 'Вечер поэзии Серебряного века', room: 'Читальный зал' },
+            ],
+            '2025-11-17': [
+                { time: '19:00-21:00', name: 'Анимеклуб: Обсуждение новых сезонов', room: 'Ауд. 208' },
+            ],
+            '2025-11-20': [
+                { time: '17:00-19:00', name: 'Встреча литературного клуба', room: 'Библиотека' },
+            ],
+            '2025-11-22': [
+                { time: '15:00-18:00', name: 'Финалы футбольного турнира', room: 'Стадион' },
+                { time: '19:00-22:00', name: 'Международный студенческий вечер', room: 'Актовый зал' },
+            ],
+            '2025-11-24': [
+                { time: '19:00-21:00', name: 'Турнир по киберспорту', room: 'Комп. класс 107' },
+            ],
+            '2025-11-27': [
+                { time: '18:00-20:00', name: 'STUDBIT: Съемка студенческого влога', room: 'Территория кампуса' },
+            ],
+            '2025-11-29': [
+                { time: '10:00-13:00', name: 'Волонтерство: Благоустройство городского парка', room: 'Центральный парк' },
+                { time: '15:00-18:00', name: 'День матери: Мастер-класс по созданию открыток', room: 'Студенческий клуб' },
+            ],
+            '2025-12-01': [
+                { time: '16:00-18:00', name: 'Собрание студенческого совета', room: 'Актовый зал' },
+            ],
+            '2025-12-04': [
+                { time: '17:00-19:00', name: 'Анимеклуб: Новогодний марафон', room: 'Ауд. 208' },
+            ],
+            '2025-12-06': [
+                { time: '13:00-16:00', name: 'Зимний турнир по бадминтону', room: 'Спортзал' },
+                { time: '17:00-20:00', name: 'Рождественский киномарафон: Классические комедии', room: 'Актовый зал' },
+            ],
+            '2025-12-08': [
+                { time: '16:00-18:00', name: 'Собрание научного кружка', room: 'Ауд. 301' },
+            ],
+            '2025-12-11': [
+                { time: '18:00-20:00', name: 'STUDBIT: Подведение итогов года', room: 'Медиастудия' },
+            ],
+            '2025-12-13': [
+                { time: '11:00-14:00', name: 'Волонтерство: Новогодние подарки для многодетных семей', room: 'Студенческий клуб' },
+                { time: '15:00-18:00', name: 'Ярмарка народных ремесел', room: 'Внутренний двор' },
+            ],
+            '2025-12-15': [
+                { time: '19:00-21:00', name: 'Клуб дебатов', room: 'Конференц-зал' },
+            ],
+            '2025-12-18': [
+                { time: '17:00-19:00', name: 'Анимеклуб: Рождественская вечеринка', room: 'Ауд. 208' },
+            ],
+            '2025-12-20': [
+                { time: '14:00-17:00', name: 'Новогодний киберспортивный турнир', room: 'Комп. класс 107' },
+                { time: '18:00-21:00', name: 'Новогодний бал-маскарад', room: 'Актовый зал' },
+            ],
+            '2025-12-22': [
+                { time: '15:00-18:00', name: 'Новогодний корпоратив от STUDBIT', room: 'Актовый зал' },
+            ],
+            '2025-12-24': [
+                { time: '17:00-19:00', name: 'Рождественский вечер: Колядки и традиции', room: 'Студенческий клуб' },
+            ],
+            '2025-12-26': [
+                { time: '12:00-16:00', name: 'Благотворительная ярмарка-раздача', room: 'Студенческий клуб' },
+            ],
+            '2025-12-27': [
+                { time: '18:00-21:00', name: 'Кинопоказ: Новогодние комедии разных стран', room: 'Актовый зал' },
+            ],
+            '2025-12-29': [
+                { time: '17:00-19:00', name: 'Заключительное собрание студсовета', room: 'Актовый зал' },
+                { time: '19:00-21:00', name: 'Вечер воспоминаний: Итоги года в фотографиях', room: 'Медиастудия' },
+            ],
+            '2025-12-31': [
+                { time: '22:00-02:00', name: 'Новогодняя ночь: Встреча 2026 года', room: 'Актовый зал' },
+            ]
+        };
+
+        let currentWeekOffset = 0;
+        let currentScheduleType = 'academic'; // 'academic' или 'extracurricular'
+
+        function getWeekDates(weekOffset) {
+            const startDate = new Date(2025, 8, 1);
+            startDate.setDate(startDate.getDate() + weekOffset * 7);
+
+            const weekDates = [];
+            for (let i = 0; i < 6; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                weekDates.push(date);
+            }
+            return weekDates;
+        }
+
+        function formatDateForKey(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatDayDate(date) {
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            return `${day}.${month}`;
+        }
+
+        function formatFullDate(date) {
+            const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+            return `${date.getDate()} ${months[date.getMonth()]}`;
+        }
+
+        function getCurrentScheduleData() {
+            return currentScheduleType === 'academic' ? scheduleData : extracurricularData;
+        }
+
+        function renderDesktopSchedule() {
+            const dates = getWeekDates(currentWeekOffset);
+            const scheduleGrid = document.getElementById('scheduleGrid');
+            const prevWeekButton = document.getElementById('prevWeek');
+            const currentData = getCurrentScheduleData();
+
+            document.getElementById('date-mon').textContent = formatDayDate(dates[0]);
+            document.getElementById('date-tue').textContent = formatDayDate(dates[1]);
+            document.getElementById('date-wed').textContent = formatDayDate(dates[2]);
+            document.getElementById('date-thu').textContent = formatDayDate(dates[3]);
+            document.getElementById('date-fri').textContent = formatDayDate(dates[4]);
+            document.getElementById('date-sat').textContent = formatDayDate(dates[5]);
+
+            // Исправлено: недели теперь начинаются с 1
+            document.getElementById('weekNumber').textContent = `Неделя ${currentWeekOffset + 1}`;
+
+            if (currentWeekOffset === 0) {
+                prevWeekButton.classList.add('disabled');
+            } else {
+                prevWeekButton.classList.remove('disabled');
+            }
+
+            scheduleGrid.innerHTML = '';
+
+            dates.forEach(date => {
+                const dateStr = formatDateForKey(date);
+                const daySchedule = currentData[dateStr] || [];
+
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day-schedule';
+
+                if (daySchedule.length === 0) {
+                    dayElement.innerHTML = '<div class="empty-day">Нет мероприятий</div>';
+                } else {
+                    daySchedule.forEach(lesson => {
+                        const lessonElement = document.createElement('div');
+                        lessonElement.className = 'lesson';
+                        lessonElement.innerHTML = `
+                            <div class="lesson-time">${lesson.time}</div>
+                            <div class="lesson-name">${lesson.name}</div>
+                            <div class="lesson-room">${lesson.room}</div>
+                        `;
+                        dayElement.appendChild(lessonElement);
+                    });
+                }
+
+                scheduleGrid.appendChild(dayElement);
+            });
+        }
+
+        function updateMobileInterface() {
+            const dates = getWeekDates(currentWeekOffset);
+            const weekCounter = document.querySelector('.mobile-week-counter');
+            const prevWeekBtn = document.querySelector('.mobile-prev-week');
+
+            // Исправлено: недели теперь начинаются с 1
+            weekCounter.textContent = `Неделя ${currentWeekOffset + 1}`;
+
+            if (currentWeekOffset === 0) {
+                prevWeekBtn.classList.add('disabled');
+            } else {
+                prevWeekBtn.classList.remove('disabled');
+            }
+
+            dates.forEach((date, index) => {
+                const dateElement = document.getElementById(`mobile-date-${['mon', 'tue', 'wed', 'thu', 'fri', 'sat'][index]}`);
+                if (dateElement) {
+                    dateElement.textContent = formatDayDate(date);
+                }
+            });
+
+            showMobileDaySchedule(0);
+        }
+
+        function showMobileDaySchedule(dayIndex) {
+            const dates = getWeekDates(currentWeekOffset);
+            const date = dates[dayIndex];
+            const dateStr = formatDateForKey(date);
+            const currentData = getCurrentScheduleData();
+            const daySchedule = currentData[dateStr] || [];
+            const scheduleContainer = document.getElementById('mobileScheduleContainer');
+            const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+
+            document.querySelectorAll('.mobile-day-btn').forEach((btn, index) => {
+                if (index === dayIndex) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            scheduleContainer.innerHTML = `
+                <div class="mobile-day-schedule-title">
+                    ${dayNames[dayIndex]} - ${formatFullDate(date)}
+                </div>
+            `;
+
+            if (daySchedule.length === 0) {
+                scheduleContainer.innerHTML += '<div class="mobile-empty-day">Нет мероприятий</div>';
+            } else {
+                daySchedule.forEach(lesson => {
+                    const lessonElement = document.createElement('div');
+                    lessonElement.className = 'mobile-lesson';
+                    lessonElement.innerHTML = `
+                        <div class="mobile-lesson-time">${lesson.time}</div>
+                        <div class="mobile-lesson-name">${lesson.name}</div>
+                        <div class="mobile-lesson-room">${lesson.room}</div>
+                    `;
+                    scheduleContainer.appendChild(lessonElement);
+                });
+            }
+        }
+
+        function toggleScheduleType(type) {
+            currentScheduleType = type;
+
+            // Обновляем активные кнопки
+            document.querySelectorAll('.schedule-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (type === 'academic') {
+                document.getElementById('academicBtn').classList.add('active');
+                document.getElementById('mobileAcademicBtn').classList.add('active');
+            } else {
+                document.getElementById('extracurricularBtn').classList.add('active');
+                document.getElementById('mobileExtracurricularBtn').classList.add('active');
+            }
+
+            // Перерисовываем расписание
+            renderDesktopSchedule();
+            updateMobileInterface();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            renderDesktopSchedule();
+            updateMobileInterface();
+
+            // Обработчики для кнопок переключения расписания
+            document.getElementById('academicBtn').addEventListener('click', function() {
+                toggleScheduleType('academic');
+            });
+
+            document.getElementById('extracurricularBtn').addEventListener('click', function() {
+                toggleScheduleType('extracurricular');
+            });
+
+            document.getElementById('mobileAcademicBtn').addEventListener('click', function() {
+                toggleScheduleType('academic');
+            });
+
+            document.getElementById('mobileExtracurricularBtn').addEventListener('click', function() {
+                toggleScheduleType('extracurricular');
+            });
+
+            document.getElementById('prevWeek').addEventListener('click', function () {
+                if (currentWeekOffset > 0) {
+                    currentWeekOffset--;
+                    renderDesktopSchedule();
+                    updateMobileInterface();
+                }
+            });
+
+            document.getElementById('nextWeek').addEventListener('click', function () {
+                currentWeekOffset++;
+                renderDesktopSchedule();
+                updateMobileInterface();
+            });
+
+            document.querySelector('.mobile-prev-week').addEventListener('click', function () {
+                if (currentWeekOffset > 0) {
+                    currentWeekOffset--;
+                    renderDesktopSchedule();
+                    updateMobileInterface();
+                }
+            });
+
+            document.querySelector('.mobile-next-week').addEventListener('click', function () {
+                currentWeekOffset++;
+                renderDesktopSchedule();
+                updateMobileInterface();
+            });
+
+            document.querySelectorAll('.mobile-day-btn').forEach((btn, index) => {
+                btn.addEventListener('click', function () {
+                    showMobileDaySchedule(index);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

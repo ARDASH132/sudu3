@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ТОП СТУДЕНТОВ</title>
+    <style>
+        .custom-logo {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .logo-text {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #6A5ACD;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(106, 90, 205, 0.3);
+        }
+
+        .logo-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* НОВЫЕ СТИЛИ ФОНА */
+        body {
+            background: linear-gradient(135deg, #f8f7ff 0%, #ffffff 50%, #f0eeff 100%);
+            color: #333;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .pattern-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(106, 90, 205, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(147, 112, 219, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 48%, rgba(106, 90, 205, 0.03) 48%, rgba(106, 90, 205, 0.03) 52%, transparent 52%),
+                linear-gradient(-45deg, transparent 48%, rgba(138, 43, 226, 0.03) 48%, rgba(138, 43, 226, 0.03) 52%, transparent 52%);
+            background-size: 60px 60px;
+            z-index: 0;
+        }
+
+        .floating-element {
+            position: absolute;
+            z-index: 0;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+        }
+
+        .floating-1 {
+            top: 15%;
+            left: 8%;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
+            border-radius: 20px;
+            opacity: 0.8;
+            filter: blur(0.5px);
+        }
+
+        .floating-2 {
+            bottom: 25%;
+            right: 10%;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            border-radius: 50%;
+            opacity: 0.7;
+            filter: blur(0.5px);
+            animation-delay: -2s;
+        }
+
+        .floating-3 {
+            top: 60%;
+            left: 12%;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            border-radius: 10px;
+            opacity: 0.6;
+            filter: blur(0.5px);
+            animation-delay: -4s;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(106, 90, 205, 0.9);
+            color: white;
+            border: 2px solid #6A5ACD;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(106, 90, 205, 0.3);
+        }
+
+        .back-button:hover {
+            background: rgba(106, 90, 205, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(106, 90, 205, 0.4);
+        }
+
+        .logout-button {
+            position: fixed;
+            top: 2rem;
+            left: 8rem;
+            background: rgba(255, 107, 107, 0.9);
+            color: white;
+            border: 2px solid #FF6B6B;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .logout-button:hover {
+            background: rgba(255, 107, 107, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        /* Профиль справа сверху */
+        .user-profile-top {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(106, 90, 205, 0.9);
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: 2px solid #6A5ACD;
+            color: white;
+            box-shadow: 0 4px 12px rgba(106, 90, 205, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .user-avatar-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ccccff;
+            object-fit: cover;
+        }
+
+        .user-info-top {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 2px;
+        }
+
+        .user-rank-top {
+            font-size: 0.9rem;
+            color: #ccccff;
+        }
+
+        /* Основной контент */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .leaderboard {
+            width: 100%;
+        }
+
+        /* Логотип по центру */
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+            margin-top: 4rem;
+        }
+
+        .logo {
+            max-height: 120px;
+            object-fit: contain;
+        }
+
+        .description {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .description h3 {
+            color: #6A5ACD;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .search {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 20px;
+            border: 2px solid #6A5ACD;
+            border-radius: 25px;
+            background: white;
+            color: #333;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        .search:focus {
+            outline: none;
+            border-color: blueviolet;
+            box-shadow: 0 0 10px rgba(106, 90, 205, 0.5);
+        }
+
+        .search::placeholder {
+            color: #999;
+        }
+
+        /* Таблица */
+        table {
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            border-collapse: collapse;
+            margin-top: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #6A5ACD, blueviolet);
+        }
+
+        thead tr {
+            border-bottom: 2px solid #ccccff;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            font-weight: 600;
+            color: white;
+        }
+
+        tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(106, 90, 205, 0.05);
+            transform: scale(1.01);
+        }
+
+        tbody tr.current-user {
+            background: rgba(106, 90, 205, 0.1);
+            border-left: 4px solid #6A5ACD;
+            font-weight: bold;
+        }
+
+        tbody tr td:first-child {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: flex-start;
+        }
+
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #6A5ACD;
+        }
+
+        /* Цвета для призовых мест */
+        .winner {
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        .runner-up {
+            color: #c0c0c0;
+            text-shadow: 0 0 10px rgba(192, 192, 192, 0.3);
+        }
+
+        .second-runner-up {
+            color: #cd7f32;
+            text-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
+        }
+
+        .ratio-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .hard-skills-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff6666);
+            transition: width 0.3s ease;
+        }
+
+        .soft-skills-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4444ff, #6666ff);
+            transition: width 0.3s ease;
+        }
+
+        .ratio-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 3px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .hard-percent {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        .soft-percent {
+            color: #4444ff;
+            font-weight: bold;
+        }
+
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .user-profile-top {
+                top: 1rem;
+                right: 1rem;
+                padding: 8px 16px;
+            }
+
+            .user-avatar-small {
+                width: 35px;
+                height: 35px;
+            }
+
+            .user-name {
+                font-size: 0.9rem;
+            }
+
+            .user-rank-top {
+                font-size: 0.8rem;
+            }
+
+            .back-button {
+                top: 1rem;
+                left: 1rem;
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            .logout-button {
+                top: 1rem;
+                left: 6rem;
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .logo-container {
+                margin-top: 5rem;
+            }
+
+            .description h3 {
+                font-size: 2rem;
+            }
+
+            .logo {
+                max-height: 80px;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th,
+            td {
+                padding: 0.7rem 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .user-profile-top {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+                padding: 10px;
+            }
+
+            .user-info-top {
+                text-align: center;
+            }
+
+            .back-button, .logout-button {
+                position: relative;
+                top: auto;
+                left: auto;
+                margin: 5px;
+            }
+
+            .main-content {
+                padding: 0.5rem;
+            }
+
+            .description h3 {
+                font-size: 1.5rem;
+            }
+
+            .search {
+                font-size: 0.9rem;
+                padding: 10px 16px;
+            }
+
+            th,
+            td {
+                padding: 0.5rem 0.3rem;
+                font-size: 0.8rem;
+            }
+
+            .player-avatar {
+                width: 30px;
+                height: 30px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="pattern-bg"></div>
+
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+    <a href="main.html" class="back-button">← Назад</a>
+    
+
+    <div class="user-profile-top" id="userProfileTop">
+        <div class="user-info-top">
+            <div class="user-name" id="currentUserName">Загрузка...</div>
+            <div class="user-rank-top" id="currentUserRank">#0 • 0 очков</div>
+        </div>
+        <img src="" alt="Аватар" class="user-avatar-small" id="currentUserAvatar">
+    </div>
+
+    <div class="main-content">
+        <div class="leaderboard">
+            <div class="logo-container">
+                <img src="https://i.ibb.co/bgJP6g6L/uuk.png" alt="Уфимский университет науки и технологий" class="logo">
+            </div>
+
+            <div class="description">
+                <h3>ТОП СТУДЕНТОВ</h3>
+                <p>Рейтинг успеваемости 2025</p>
+                <input id="search" class="search" placeholder="Поиск студентов..." oninput="search()">
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Место</th>
+                        <th>Студент</th>
+                        <th>Hard Skills</th>
+                        <th>Soft Skills</th>
+                        <th>Общие очки</th>
+                        <th>Соотношение %</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <!-- Данные будут заполнены через JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Данные рейтинга
+        const leaderboardData = [
+            { name: "Кужаев Арсен", hardSkills: 156, softSkills: 83, total: 239, place: 1 },
+            { name: "Бадамшин Антон", hardSkills: 134, softSkills: 75, total: 209, place: 2 },
+            { name: "Шеметов Глеб", hardSkills: 98, softSkills: 56, total: 154, place: 3 },
+            { name: "Шапошников Иван", hardSkills: 85, softSkills: 48, total: 133, place: 4 },
+            { name: "Мирсаяпов Роман", hardSkills: 78, softSkills: 42, total: 120, place: 5 },
+            { name: "Магасумов Алмаз", hardSkills: 72, softSkills: 40, total: 112, place: 6 },
+            { name: "Костригина Марина", hardSkills: 65, softSkills: 35, total: 100, place: 7 },
+            { name: "Леушина Алена", hardSkills: 52, softSkills: 30, total: 82, place: 8 },
+            { name: "Дмитриев Данил", hardSkills: 45, softSkills: 25, total: 70, place: 9 }
+        ];
+
+        function search() {
+            var text = document.getElementById('search').value.toLowerCase();
+            const tr = document.querySelectorAll('tbody tr');
+
+            tr.forEach(row => {
+                const playerName = row.querySelector('.player-info span').textContent.toLowerCase();
+                if (playerName.includes(text)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function generateAvatar(seed) {
+            return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}&backgroundColor=6A5ACD&radius=50`;
+        }
+
+        function generateBotAvatar(seed) {
+            return `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(seed)}&backgroundColor=6A5ACD`;
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+
+        function populateLeaderboard() {
+            const tbody = document.getElementById('leaderboardBody');
+            tbody.innerHTML = '';
+
+            leaderboardData.forEach(student => {
+                const row = document.createElement('tr');
+                
+                // Определяем класс для призовых мест
+                let placeClass = '';
+                if (student.place === 1) placeClass = 'winner';
+                else if (student.place === 2) placeClass = 'runner-up';
+                else if (student.place === 3) placeClass = 'second-runner-up';
+
+                const hardPercentage = ((student.hardSkills / student.total) * 100).toFixed(1);
+                const softPercentage = ((student.softSkills / student.total) * 100).toFixed(1);
+
+                // Определяем аватар
+                let avatarSrc;
+                if (student.name === 'Шапошников Иван' || student.name === 'Мирсаяпов Роман') {
+                    avatarSrc = generateBotAvatar(student.name.split(' ')[0]);
+                } else {
+                    avatarSrc = generateAvatar(student.name.split(' ')[0]);
+                }
+
+                row.innerHTML = `
+                    <td class="${placeClass}">${student.place}</td>
+                    <td>
+                        <div class="player-info">
+                            <img src="${avatarSrc}" alt="${student.name.split(' ')[0]}" class="player-avatar">
+                            <span>${student.name}</span>
+                        </div>
+                    </td>
+                    <td>${student.hardSkills}</td>
+                    <td>${student.softSkills}</td>
+                    <td>${student.total}</td>
+                    <td>
+                        <div class="ratio-bar">
+                            <div class="hard-skills-fill" style="width: ${hardPercentage}%"></div>
+                            <div class="soft-skills-fill" style="width: ${softPercentage}%"></div>
+                        </div>
+                        <div class="ratio-text">
+                            <span class="hard-percent">${hardPercentage}%</span>
+                            <span class="soft-percent">${softPercentage}%</span>
+                        </div>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateCurrentUser() {
+            const userData = JSON.parse(localStorage.getItem('currentUser'));
+            
+            if (!userData) {
+                // Если пользователь не авторизован, перенаправляем на вход
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Обновляем профиль в правом верхнем углу
+            const userNameElement = document.getElementById('currentUserName');
+            const userRankElement = document.getElementById('currentUserRank');
+            const userAvatar = document.getElementById('currentUserAvatar');
+
+            if (userNameElement) userNameElement.textContent = userData.name;
+            if (userAvatar) userAvatar.src = generateAvatar(userData.name.split(' ')[0]);
+
+            // Находим текущего пользователя в рейтинге
+            const currentUserInRanking = leaderboardData.find(student => 
+                student.name === userData.name
+            );
+
+            if (currentUserInRanking) {
+                if (userRankElement) {
+                    userRankElement.textContent = `#${currentUserInRanking.place} • ${currentUserInRanking.total} очков`;
+                }
+
+                // Выделяем текущего пользователя в таблице
+                setTimeout(() => {
+                    const rows = document.querySelectorAll('tbody tr');
+                    rows.forEach((row, index) => {
+                        if (index === currentUserInRanking.place - 1) {
+                            row.classList.add('current-user');
+                        }
+                    });
+                }, 100);
+            } else {
+                // Если пользователя нет в топе, показываем базовую информацию
+                if (userRankElement) {
+                    userRankElement.textContent = 'Не в топе';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            populateLeaderboard();
+            updateCurrentUser();
+        });
+    </script>
+</body>
+</html>
