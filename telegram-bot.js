@@ -14,14 +14,19 @@ console.log('📡 Окружение:', process.env.NODE_ENV || 'development');
 console.log('🔗 Сервер:', SERVER_URL);
 
 // Инициализация бота
-const bot = new TelegramBot(token, { 
-    polling: {
-        interval: 300,
-        params: {
-            timeout: 10
-        }
-    }
-});
+const bot = new TelegramBot(token);
+const WEBHOOK_URL = process.env.RAILWAY_PUBLIC_DOMAIN 
+    ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/bot${token}`
+    : null;
+
+// В Railway используем webhook
+if (WEBHOOK_URL) {
+    console.log('🌐 Использую Webhook для Railway');
+    bot.setWebHook(WEBHOOK_URL);
+} else {
+    console.log('📡 Использую Polling для разработки');
+    bot.startPolling();
+}
 
 // Команда /start
 bot.onText(/\/start/, (msg) => {

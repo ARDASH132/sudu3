@@ -5,13 +5,23 @@ const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const fetch = require('node-fetch');
-
+const TelegramBot = require('node-telegram-bot-api');
+const bot = new TelegramBot(process.env.TELEGRAM_TOKEN || '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 // Middleware
 // В самое начало роутов, после middleware:
+app.post(`/bot${TELEGRAM_TOKEN}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
+app.post(`/bot${process.env.TELEGRAM_TOKEN || '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU'}`, (req, res) => {
+    bot.processUpdate(req.body);
+    res.sendStatus(200);
+});
+
 app.get('/', (req, res) => {
     res.json({ 
         status: 'OK', 
@@ -531,6 +541,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`⚡ Готов к работе!`);
 });
 // Обработка ошибок
+console.log('✅ Server started');
+console.log('✅ Telegram bot running via webhook');
 app.use((err, req, res, next) => {
     console.error('❌ Ошибка сервера:', err.stack);
     res.status(500).json({ 
