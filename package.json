@@ -4,6 +4,7 @@
   "main": "server.js",
   "scripts": {
     "start": "npm-run-all --parallel server bot",
+    "dev": "npm-run-all --parallel server bot", 
     "server": "node server.js",
     "bot": "node telegram-bot.js"
   },
