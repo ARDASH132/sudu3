@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Информационный раздел СУДУ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f7ff 0%, #ffffff 50%, #f0eeff 100%);
+            color: #333;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+        }
+
+        /* Красивый узорный фон */
+        .pattern-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(106, 90, 205, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(147, 112, 219, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 48%, rgba(106, 90, 205, 0.03) 48%, rgba(106, 90, 205, 0.03) 52%, transparent 52%),
+                linear-gradient(-45deg, transparent 48%, rgba(138, 43, 226, 0.03) 48%, rgba(138, 43, 226, 0.03) 52%, transparent 52%);
+            background-size: 60px 60px;
+            z-index: 0;
+        }
+
+        /* Декоративные элементы */
+        .floating-element {
+            position: absolute;
+            z-index: 0;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+        }
+
+        .floating-1 {
+            top: 15%;
+            left: 8%;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
+            border-radius: 20px;
+            opacity: 0.8;
+            filter: blur(0.5px);
+        }
+
+        .floating-2 {
+            bottom: 25%;
+            right: 10%;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            border-radius: 50%;
+            opacity: 0.7;
+            filter: blur(0.5px);
+            animation-delay: -2s;
+        }
+
+        .floating-3 {
+            top: 60%;
+            left: 12%;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            border-radius: 10px;
+            opacity: 0.6;
+            filter: blur(0.5px);
+            animation-delay: -4s;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            z-index: 1;
+            position: relative;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #4a3b8c;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #6c63a0;
+            font-size: 1.2rem;
+        }
+
+
+        .search {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 20px;
+            border: 2px solid #6A5ACD;
+            border-radius: 25px;
+            background: white;
+            color: #333;
+            font-size: 1rem;
+            margin: 1rem auto;
+            display: block;
+        }
+
+        .search:focus {
+            outline: none;
+            border-color: blueviolet;
+            box-shadow: 0 0 10px rgba(106, 90, 205, 0.5);
+        }
+
+        .search::placeholder {
+            color: #999;
+        }
+
+        .faq-container {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(106, 90, 205, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .faq-item {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #eae7f8;
+            padding-bottom: 20px;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .faq-question {
+            font-size: 1.3rem;
+            color: #4a3b8c;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-question:hover {
+            color: #6a5acd;
+        }
+
+        .faq-answer {
+            color: #555;
+            line-height: 1.6;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .faq-answer {
+            white-space: pre-line;
+        }
+
+        .faq-answer.active {
+            max-height: 500px;
+        }
+
+        .toggle-icon {
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .toggle-icon {
+            transform: rotate(45deg);
+        }
+
+        .back-button {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(106, 90, 205, 0.9);
+            color: white;
+            border: 2px solid #6A5ACD;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(106, 90, 205, 0.3);
+        }
+
+        .back-button:hover {
+            background: rgba(106, 90, 205, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(106, 90, 205, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .back-button {
+                top: 1rem;
+                left: 1rem;
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .faq-question {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="pattern-bg"></div>
+
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+    <a href="main.html" class="back-button">← Назад</a>
+
+    <div class="container">
+        <header>
+            <h1>Информационный раздел</h1>
+
+            <input id="search" class="search" placeholder="Поиск по вопросам..." oninput="searchFAQ()">
+        </header>
+
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question">
+                    Как подать заявку на заселение в общежитие
+                    <span class="toggle-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    Создание заявки: Нужно найти в меню раздел «Мои заявки на заселение», создать новую заявку, указать
+                    контактный телефон и выбрать студенческий городок.
+
+                    Отправка на согласование: После создания заявки необходимо ознакомиться с перечнем документов и
+                    отправить заявку на согласование.
+
+                    Прикрепление документов: К заявке можно прикрепить документ об оплате (в формате PDF),
+                    указав сумму и комментарий. Для льготников вместо чека нужно прикрепить квитанцию и указать
+                    основание для льготы.
+                </div>
+            </div>
+
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    Как заказать справку-вызов
+                    <span class="toggle-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    1. Создание заявки: Нужно найти в меню раздел «МФСО» -> «Ваши заявки» и нажать «Добавить заявку».
+
+                    2. Заполнение данных: В новой заявке необходимо:
+
+                    3. Выбрать тип заявки «Справка-вызов».
+
+                    4. Указать контактный телефон.
+
+                    5. Выбрать университет, в который поступали.
+
+                    6. Указать полное наименование работодателя.
+
+                    7. Указать сроки сессии.
+
+                    8. Выбрать вид аттестации (например, "Промежуточная аттестация" для сессии).
+
+                    9. Отправка на согласование: После создания заявки и проверки данных её нужно отправить на
+                    согласование.
+
+                    10. Отслеживание статуса: После отправки можно отслеживать этапы согласования заявки и узнать, когда
+                    справка будет готова.
+
+                    Важно: В документе подробно объясняется, какой вид аттестации нужно выбирать для разных учебных
+                    ситуаций (сессия, госэкзамены, защита диплома и т.д.).
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    Как оформить материальную помощь
+                    <span class="toggle-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    Пошаговая инструкция:
+                    1. Заказать полную справку об обучении в личном кабинете МФСО на сайте isu.uust.ru (раздел
+                    "Заявки").
+
+                    2. Заказать справку о доходах там же, в МФСО, указав период "Последние 4 месяца".
+
+                    3. Получить реквизиты своей стипендиальной карты МИР (через банковское приложение или отделение
+                    банка).
+
+                    4. Оформить временную регистрацию (прописку), если вы проживаете в общежитии.
+
+                    5. Записаться на приём в МФЦ для подачи документов на справку из соцзащиты. Услуга называется:
+                    «Получение социальной помощи малоимущим и одиноко проживающим гражданам».
+
+                    6. Через 10 рабочих дней справку можно забрать.
+
+                    7. Заявление на ГСС в университет. Для этого нужно подойти в МФСО с готовой справкой из органов
+                    социальной защиты.
+
+                    Кто имеет право на получение ГСС?
+
+                    1.Ветераны боевых действий.
+
+                    2.Проходившие военную службу по контракту (не менее 3 лет).
+
+                    3.Подвергшиеся воздействию радиации (Чернобыль, Семипалатинский полигон).
+
+                    4.Дети-сироты и оставшиеся без попечения родителей.
+
+                    5.Лица, потерявшие в период обучения обоих родителей.
+
+                    6.Дети-инвалиды, инвалиды I и II групп, инвалиды с детства.
+
+                    7.Студенты, получившие государственную социальную помощь (как малоимущие).
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    Студенческая поликлиника
+                    <span class="toggle-icon">+</span>
+                </div>
+                <div class="faq-answer">
+                    Поликлина находится на Цурюпы 4, чтобы к ней прикрипиться необходимо принести:
+
+                    1. Паспорт с пропиской
+
+                    2. Медицинский полис с двух сторон
+
+                    3. СНИЛС (задняя неинформационная часть не нужна)
+
+                    4. ИНН
+
+                    5а. Или справка 086/y (при наличии). Если её нет, ничего страшного.
+
+                    5б. Или результат о флюорографии (не позже 1 года)
+
+                    6,7... Сведения о прививках!!! Там должны быть прививки, указанные на фото
+
+                    Last. Справка об инвалидности (при наличии)
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+    </div>
+
+    <script>
+        function searchFAQ() {
+            const searchText = document.getElementById('search').value.toLowerCase();
+            const faqItems = document.querySelectorAll('.faq-item');
+
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question').textContent.toLowerCase();
+                const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+
+                if (question.includes(searchText) || answer.includes(searchText)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const faqItems = document.querySelectorAll('.faq-item');
+
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                const answer = item.querySelector('.faq-answer');
+
+                question.addEventListener('click', () => {
+                    faqItems.forEach(otherItem => {
+                        if (otherItem !== item) {
+                            otherItem.classList.remove('active');
+                            otherItem.querySelector('.faq-answer').classList.remove('active');
+                        }
+                    });
+                    item.classList.toggle('active');
+                    answer.classList.toggle('active');
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

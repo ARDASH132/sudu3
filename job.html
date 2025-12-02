@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вакансии для студентов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f7ff 0%, #ffffff 50%, #f0eeff 100%);
+            color: #333;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Красивый узорный фон */
+        .pattern-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(106, 90, 205, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(147, 112, 219, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 48%, rgba(106, 90, 205, 0.03) 48%, rgba(106, 90, 205, 0.03) 52%, transparent 52%),
+                linear-gradient(-45deg, transparent 48%, rgba(138, 43, 226, 0.03) 48%, rgba(138, 43, 226, 0.03) 52%, transparent 52%);
+            background-size: 60px 60px;
+            z-index: 0;
+        }
+
+        /* Декоративные элементы  */
+        .floating-element {
+            position: absolute;
+            z-index: 0;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+        }
+
+        .floating-1 {
+            top: 15%;
+            left: 8%;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
+            border-radius: 20px;
+            opacity: 0.8;
+            filter: blur(0.5px);
+        }
+
+        .floating-2 {
+            bottom: 25%;
+            right: 10%;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            border-radius: 50%;
+            opacity: 0.7;
+            filter: blur(0.5px);
+            animation-delay: -2s;
+        }
+
+        .floating-3 {
+            top: 60%;
+            left: 12%;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            border-radius: 10px;
+            opacity: 0.6;
+            filter: blur(0.5px);
+            animation-delay: -4s;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #6A5ACD 0%, #8A2BE2 100%);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            flex-wrap: wrap;
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .btn-back {
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+        }
+
+        .btn-back:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .vacancies-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .vacancy-card {
+            background: linear-gradient(135deg, #ffffff, #f8f7ff);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .vacancy-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .vacancy-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #6A5ACD, #8A2BE2);
+        }
+
+        .company-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .vacancy-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #6A5ACD;
+        }
+
+        .vacancy-details {
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .detail-icon {
+            width: 20px;
+            margin-right: 10px;
+            color: #6A5ACD;
+        }
+
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .skill-tag {
+            background: #f8f9fa;
+            color: #2c3e50;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .apply-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
+            margin-top: 15px;
+        }
+
+        .apply-button:hover {
+            background: linear-gradient(135deg, #8A2BE2, #6A5ACD);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(106, 90, 205, 0.4);
+        }
+
+        /* Модальное окно подтверждения */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            text-align: center;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #7f8c8d;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #e74c3c;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .modal-subtitle {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .modal-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.confirm {
+            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
+            color: white;
+        }
+
+        .modal-btn.cancel {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .modal-btn.ok {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 12px 40px;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .success-icon {
+            font-size: 48px;
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .header-title {
+                position: static;
+                transform: none;
+                order: -1;
+                width: 100%;
+                text-align: center;
+                margin-bottom: 10px;
+                font-size: 24px;
+            }
+
+            .vacancies-container {
+                grid-template-columns: 1fr;
+            }
+
+            .floating-element {
+                display: none;
+            }
+
+            .modal-buttons {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-title {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Узорный фон-->
+    <div class="pattern-bg"></div>
+
+    <!-- Плавающие декоративные элементы -->
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+    <div class="container">
+        <header>
+            <a href='main.html' class="btn btn-back" style="text-decoration: none;">← Назад</a>
+            <div class="header-title">Вакансии для студентов</div>
+        </header>
+
+        <div class="vacancies-container">
+            <!-- Вакансия 1 - Газпром -->
+            <div class="vacancy-card">
+                <div class="company-name">ПАО «Газпром»</div>
+                <div class="vacancy-title">Стажер-разработчик IT систем</div>
+                <div class="vacancy-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">📍</span>
+                        <span>Уфа, ул. Новосибирская, д.2, к.4</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">💰</span>
+                        <span>от 65 000 руб.</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">⏱️</span>
+                        <span>Полный день</span>
+                    </div>
+                </div>
+                <p>Разработка и поддержка корпоративных IT систем для нужд нефтегазовой отрасли. Работа с enterprise-решениями.</p>
+                <div class="skills-list">
+                    <span class="skill-tag">Java</span>
+                    <span class="skill-tag">Oracle</span>
+                    <span class="skill-tag">Spring</span>
+                    <span class="skill-tag">SQL</span>
+                </div>
+                <button class="apply-button" onclick="showConfirmation('ПАО «Газпром»', 'Стажер-разработчик IT систем')">Откликнуться</button>
+            </div>
+
+            <!-- Вакансия 2 - Авиатрон -->
+            <div class="vacancy-card">
+                <div class="company-name">АО «Авиатрон»</div>
+                <div class="vacancy-title">Разработчик embedded-систем</div>
+                <div class="vacancy-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">📍</span>
+                        <span>Уфа, ул. 50 лет СССР, 42/3 (этаж 5)</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">💰</span>
+                        <span>от 70 000 руб.</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">⏱️</span>
+                        <span>Гибкий график</span>
+                    </div>
+                </div>
+                <p>Разработка программного обеспечения для авиационных систем и оборудования. Работа с реальным временем.</p>
+                <div class="skills-list">
+                    <span class="skill-tag">C++</span>
+                    <span class="skill-tag">Embedded</span>
+                    <span class="skill-tag">RTOS</span>
+                    <span class="skill-tag">Python</span>
+                </div>
+                <button class="apply-button" onclick="showConfirmation('АО «Авиатрон»', 'Разработчик embedded-систем')">Откликнуться</button>
+            </div>
+
+            <!-- Вакансия 3 - Форд Диалог -->
+            <div class="vacancy-card">
+                <div class="company-name">ООО «Форд Диалог»</div>
+                <div class="vacancy-title">Frontend-разработчик (стажировка)</div>
+                <div class="vacancy-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">📍</span>
+                        <span>Уфа, ул. Пушкина, 33/2 (подъезд 1)</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">💰</span>
+                        <span>от 55 000 руб.</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">⏱️</span>
+                        <span>20-30 часов/неделя</span>
+                    </div>
+                </div>
+                <p>Разработка пользовательских интерфейсов для CRM систем. Современный стек технологий, менторство.</p>
+                <div class="skills-list">
+                    <span class="skill-tag">JavaScript</span>
+                    <span class="skill-tag">React</span>
+                    <span class="skill-tag">TypeScript</span>
+                    <span class="skill-tag">HTML/CSS</span>
+                </div>
+                <button class="apply-button" onclick="showConfirmation('ООО «Форд Диалог»', 'Frontend-разработчик (стажировка)')">Откликнуться</button>
+            </div>
+
+            <!-- Вакансия 4 - Уфанет -->
+            <div class="vacancy-card">
+                <div class="company-name">АО «Уфанет»</div>
+                <div class="vacancy-title">Стажер-разработчик Python</div>
+                <div class="vacancy-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">📍</span>
+                        <span>Уфа, просп. Октября, 4/3 (этаж 1)</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">💰</span>
+                        <span>от 60 000 руб.</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">⏱️</span>
+                        <span>Гибкий график</span>
+                    </div>
+                </div>
+                <p>Разработка backend-сервисов для телекоммуникационных систем. Работа в команде опытных разработчиков.</p>
+                <div class="skills-list">
+                    <span class="skill-tag">Python</span>
+                    <span class="skill-tag">Django</span>
+                    <span class="skill-tag">PostgreSQL</span>
+                    <span class="skill-tag">Docker</span>
+                </div>
+                <button class="apply-button" onclick="showConfirmation('АО «Уфанет»', 'Стажер-разработчик Python')">Откликнуться</button>
+            </div>
+
+            <!-- Вакансия 5 - БСК -->
+            <div class="vacancy-card">
+                <div class="company-name">ПАО «Башкирская содовая компания»</div>
+                <div class="vacancy-title">Стажер Data Analyst</div>
+                <div class="vacancy-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">📍</span>
+                        <span>Уфа, ул. Цветочная , 3/2</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">💰</span>
+                        <span>от 58 000 руб.</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">⏱️</span>
+                        <span>Полный день</span>
+                    </div>
+                </div>
+                <p>Анализ данных производственных процессов, построение отчетов и дашбордов. Работа с большими массивами информации.</p>
+                <div class="skills-list">
+                    <span class="skill-tag">Python</span>
+                    <span class="skill-tag">SQL</span>
+                    <span class="skill-tag">Tableau</span>
+                    <span class="skill-tag">Power BI</span>
+                </div>
+                <button class="apply-button" onclick="showConfirmation('ПАО «Башкирская содовая компания»', 'Стажер Data Analyst')">Откликнуться</button>
+            </div>
+
+            <!-- Вакансия 6 - БЭТО -->
+            <div class="vacancy-card">
+                <div class="company-name">АО «БЭТО»</div>
+                <div class="vacancy-title">Стажер по информационной безопасности</div>
+                <div class="vacancy-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">📍</span>
+                        <span>Уфа, ул Менделеева, д. 134</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">💰</span>
+                        <span>от 52 000 руб.</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">⏱️</span>
+                        <span>Полный день</span>
+                    </div>
+                </div>
+                <p>Аудит безопасности, анализ уязвимостей, тестирование на проникновение. Работа с экспертами в области кибербезопасности.</p>
+                <div class="skills-list">
+                    <span class="skill-tag">Linux</span>
+                    <span class="skill-tag">Python</span>
+                    <span class="skill-tag">Сети</span>
+                    <span class="skill-tag">Криптография</span>
+                </div>
+                <button class="apply-button" onclick="showConfirmation('АО «БЭТО»', 'Стажер по информационной безопасности')">Откликнуться</button>
+            </div>
+
+            <!-- Вакансия 7 - УАПО -->
+            <div class="vacancy-card">
+                <div class="company-name">ПАО «Уфимское агрегатное производственное объединение»</div>
+                <div class="vacancy-title">Разработчик CAD/CAM систем</div>
+                <div class="vacancy-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">📍</span>
+                        <span>Уфа, ул. Аксакова, д.97</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">💰</span>
+                        <span>от 68 000 руб.</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">⏱️</span>
+                        <span>Полный день</span>
+                    </div>
+                </div>
+                <p>Разработка и адаптация систем автоматизированного проектирования и производства для авиационной промышленности.</p>
+                <div class="skills-list">
+                    <span class="skill-tag">C++</span>
+                    <span class="skill-tag">CAD/CAM</span>
+                    <span class="skill-tag">AutoCAD</span>
+                    <span class="skill-tag">SolidWorks</span>
+                </div>
+                <button class="apply-button" onclick="showConfirmation('ПАО «УАПО»', 'Разработчик CAD/CAM систем')">Откликнуться</button>
+            </div>
+
+            <!-- Вакансия 8 - Башнефть -->
+            <div class="vacancy-card">
+                <div class="company-name">ПАО «АНК «Башнефть»</div>
+                <div class="vacancy-title">Java-разработчик (стажировка)</div>
+                <div class="vacancy-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">📍</span>
+                        <span>Уфа, ул. Карла Маркса, 30/1</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">💰</span>
+                        <span>от 70 000 руб.</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">⏱️</span>
+                        <span>Полный день</span>
+                    </div>
+                </div>
+                <p>Разработка высоконагруженных backend-сервисов для нефтедобывающей отрасли. Работа с микросервисной архитектурой.</p>
+                <div class="skills-list">
+                    <span class="skill-tag">Java</span>
+                    <span class="skill-tag">Spring</span>
+                    <span class="skill-tag">Kafka</span>
+                    <span class="skill-tag">PostgreSQL</span>
+                </div>
+                <button class="apply-button" onclick="showConfirmation('ПАО «АНК «Башнефть»', 'Java-разработчик (стажировка)')">Откликнуться</button>
+            </div>
+
+            <!-- Вакансия 10 - УМПО -->
+            <div class="vacancy-card">
+                <div class="company-name">ПАО «Уфимское моторостроительное производственное объединение»</div>
+                <div class="vacancy-title">DevOps-инженер (стажировка)</div>
+                <div class="vacancy-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">📍</span>
+                        <span>Уфа, ул. Ферина, д.2</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">💰</span>
+                        <span>от 65 000 руб.</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">⏱️</span>
+                        <span>Гибкий график</span>
+                    </div>
+                </div>
+                <p>Настройка CI/CD процессов, работа с облачной инфраструктурой, автоматизация развертывания приложений.</p>
+                <div class="skills-list">
+                    <span class="skill-tag">Docker</span>
+                    <span class="skill-tag">Kubernetes</span>
+                    <span class="skill-tag">AWS</span>
+                    <span class="skill-tag">GitLab CI</span>
+                </div>
+                <button class="apply-button" onclick="showConfirmation('ПАО «УМПО»', 'DevOps-инженер (стажировка)')">Откликнуться</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно подтверждения -->
+    <div class="modal" id="confirmation-modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <h2 class="modal-title">Подтверждение заявки</h2>
+            <p id="confirmation-text">Вы хотите подать заявку на вакансию?</p>
+            <div class="modal-buttons">
+                <button class="modal-btn confirm" onclick="submitApplication()">Да</button>
+                <button class="modal-btn cancel" onclick="closeModal()">Нет</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно успеха -->
+    <div class="modal" id="success-modal">
+        <div class="modal-content">
+            <div class="success-icon">✓</div>
+            <h2 class="modal-title">Вы успешно подали заявку</h2>
+            <p class="modal-subtitle">Ваши данные и портфолио отправлены компании</p>
+            <div class="modal-buttons">
+                <button class="modal-btn ok" onclick="closeSuccessModal()">Ок</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentApplication = null;
+
+        function showConfirmation(company, position) {
+            currentApplication = { company, position };
+            document.getElementById('confirmation-text').textContent = 
+                `Вы хотите подать заявку на вакансию "${position}" в компании ${company}?`;
+            document.getElementById('confirmation-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('confirmation-modal').classList.remove('active');
+            currentApplication = null;
+        }
+
+        function submitApplication() {
+            if (currentApplication) {
+                closeModal();
+                document.getElementById('success-modal').classList.add('active');
+                
+                // Здесь можно добавить отправку данных на сервер
+                // Например: sendApplicationToServer(currentApplication);
+            }
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('success-modal').classList.remove('active');
+            currentApplication = null;
+        }
+
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            const confirmationModal = document.getElementById('confirmation-modal');
+            const successModal = document.getElementById('success-modal');
+            
+            if (event.target === confirmationModal) {
+                closeModal();
+            }
+            if (event.target === successModal) {
+                closeSuccessModal();
+            }
+        }
+    </script>
+</body>
+
+</html>
