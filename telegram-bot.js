@@ -14,7 +14,10 @@ const bot = new TelegramBot(token, {
 });
 
 // Вместо localhost используйте URL вашего хостируемого сервера
-const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
+// В telegram-bot.js измените определение SERVER_URL:
+const SERVER_URL = process.env.RENDER 
+    ? `http://localhost:${process.env.PORT || 5000}`
+    : process.env.SERVER_URL || 'http://localhost:5000';
 // Или для продакшена:
 // const SERVER_URL = 'https://ваш-домен.com';
 
