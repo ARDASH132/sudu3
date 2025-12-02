@@ -1,7 +1,9 @@
+require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const fetch = require('node-fetch');
+// Никогда не храните токены в коде!
+const token = process.env.TELEGRAM_BOT_TOKEN || '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
 
-const token = '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
 const bot = new TelegramBot(token, { 
     polling: {
         interval: 300,
@@ -11,7 +13,10 @@ const bot = new TelegramBot(token, {
     }
 });
 
-const SERVER_URL = 'http://localhost:5000';
+// Вместо localhost используйте URL вашего хостируемого сервера
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
+// Или для продакшена:
+// const SERVER_URL = 'https://ваш-домен.com';
 
 console.log('🚀 Запуск Telegram бота...');
 console.log('🔗 Подключение к серверу:', SERVER_URL);

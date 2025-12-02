@@ -1,23 +1,36 @@
+require('dotenv').config();
+require('./telegram-bot.js');
 const express = require('express');
 const path = require('path');
-const cors = require('cors');
+
 const sqlite3 = require('sqlite3').verbose();
 const fetch = require('node-fetch');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
+// Вместо жестких localhost ссылок
+const cors = require('cors');
+
+// Разрешаем запросы с разных доменов
 app.use(cors({
-    origin: ['http://localhost:5000', 'http://127.0.0.1:5000'],
+    origin: '*', // Или укажите ваш домен при хостинге
     credentials: true
 }));
+
+// Удалите или измените статические пути
+// app.use(express.static('.')); // Может быть небезопасно на хостинге
+
+// Вместо этого лучше указать конкретную папку
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 app.use(express.static('.')); // Добавляем эту строку
 
 // ==================== ПОДКЛЮЧЕНИЕ К SQLite ====================
-const dbPath = path.join(__dirname, 'sudu_database.sqlite');
+// Используйте путь к базе данных в зависимости от окружения
+const dbPath = process.env.DATABASE_URL || path.join(__dirname, 'sudu_database.sqlite');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('❌ Ошибка подключения к SQLite:', err.message);
@@ -635,8 +648,6 @@ app.use('*', (req, res) => {
 });
 
 // Запуск сервера
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🎯 Сервер запущен на http://localhost:${PORT}`);
-    console.log(`🎯 Сервер также доступен по http://127.0.0.1:${PORT}`);
-    console.log(`✅ Все API должны работать!`);
-});
+app.listen(PORT, () => {
+    console.log(`🎯 Сервер запущен на порту ${PORT}`);
+});а
