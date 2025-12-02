@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon server.js",
+    "railway": "node index.js",
     "dev:all": "concurrently \"nodemon server.js\" \"node telegram-bot.js\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
