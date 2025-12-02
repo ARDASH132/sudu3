@@ -1,17 +1,69 @@
-require('dotenv').config();
-const TelegramBot = require('node-telegram-bot-api');
-const fetch = require('node-fetch');
+// telegram-bot.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
+const path = require('path');
+const fs = require('fs');
 
-// Никогда не храните токены в коде!
-const token = process.env.TELEGRAM_BOT_TOKEN || '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
+console.log('🚀 Запуск Telegram бота...');
+console.log('📁 Текущая директория:', __dirname);
 
-// Проверка токена
-if (!token || token === '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU') {
-    console.error('❌ ОШИБКА: TELEGRAM_BOT_TOKEN не установлен в переменных окружения!');
-    console.log('ℹ️  Установите токен в Railway/Render Dashboard');
+// Проверяем .env файл
+const envPath = path.join(__dirname, '.env');
+console.log('🔍 Проверка файла .env:', envPath);
+
+if (fs.existsSync(envPath)) {
+    console.log('✅ Файл .env найден');
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    console.log('📄 Содержимое (первые 100 символов):', envContent.substring(0, 100) + '...');
+} else {
+    console.error('❌ Файл .env не найден!');
+    console.log('📝 Создайте файл .env с содержанием:');
+    console.log('TELEGRAM_BOT_TOKEN=ваш_токен');
+    console.log('SERVER_URL=http://localhost:5000');
     process.exit(1);
 }
 
+// Загружаем переменные окружения
+require('dotenv').config({ path: envPath });
+
+const TelegramBot = require('node-telegram-bot-api');
+const fetch = require('node-fetch');
+
+// Получаем токен
+const token = process.env.TELEGRAM_BOT_TOKEN;
+
+console.log('\n🔍 Проверка токена...');
+console.log('- TELEGRAM_BOT_TOKEN:', token ? '✅ Найден' : '❌ Не найден');
+
+// Базовая проверка
+if (!token) {
+    console.error('\n❌ ОШИБКА: TELEGRAM_BOT_TOKEN не найден в .env');
+    console.log('ℹ️  Убедитесь, что в файле .env есть строка:');
+    console.log('    TELEGRAM_BOT_TOKEN=ваш_токен');
+    process.exit(1);
+}
+
+console.log('- Длина токена:', token.length, 'символов');
+console.log('- Первые 15 символов:', token.substring(0, 15) + '...');
+
+// Проверка формата
+if (!token.includes(':')) {
+    console.error('\n❌ ОШИБКА: Неправильный формат токена');
+    console.log('ℹ️  Токен должен содержать двоеточие (:)');
+    console.log('ℹ️  Пример: 1234567890:ABCdefGHIjklMNOpqrsTUVwxyz');
+    process.exit(1);
+}
+
+const tokenParts = token.split(':');
+if (tokenParts.length !== 2) {
+    console.error('\n❌ ОШИБКА: Неправильный формат токена');
+    console.log('ℹ️  Должно быть ровно 2 части разделенные двоеточием');
+    process.exit(1);
+}
+
+console.log('✅ Формат токена правильный!');
+console.log('🤖 Bot ID:', tokenParts[0]);
+
+// Создаем бота
+console.log('\n🚀 Создаем Telegram бота...');
 const bot = new TelegramBot(token, { 
     polling: {
         interval: 300,
@@ -23,19 +75,15 @@ const bot = new TelegramBot(token, {
     }
 });
 
-// Определяем URL сервера в зависимости от платформы
+// Определяем URL сервера
 let SERVER_URL;
-
 if (process.env.RENDER) {
-    // Render: локальный сервер
     SERVER_URL = `http://localhost:${process.env.PORT || 5000}`;
     console.log('🚀 Платформа: Render');
 } else if (process.env.RAILWAY_STATIC_URL) {
-    // Railway: локальный сервер (Railway проксирует запросы)
     SERVER_URL = `http://localhost:${process.env.PORT || 5000}`;
     console.log('🚄 Платформа: Railway');
 } else {
-    // Локальная разработка
     SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
     console.log('💻 Режим: Локальная разработка');
 }
@@ -47,9 +95,7 @@ console.log('📡 Режим бота: Polling');
 async function checkServerConnection() {
     try {
         console.log('🔍 Проверка соединения с сервером...');
-        const response = await fetch(`${SERVER_URL}/api/health`, {
-            timeout: 5000
-        });
+        const response = await fetch(`${SERVER_URL}/api/health`, { timeout: 5000 });
         
         if (response.ok) {
             const data = await response.json();
@@ -70,7 +116,7 @@ async function checkServerConnection() {
 checkServerConnection().then(isConnected => {
     if (!isConnected) {
         console.log('⚠️  Предупреждение: сервер недоступен');
-        console.log('ℹ️  Убедитесь что сервер запущен на порту', process.env.PORT || 5000);
+        console.log('ℹ️  Убедитесь что сервер запущен на', SERVER_URL);
     }
 });
 
@@ -91,7 +137,7 @@ bot.onText(/\/start/, (msg) => {
     );
 });
 
-// Команда /status - проверка статуса
+// Команда /status
 bot.onText(/\/status/, async (msg) => {
     const chatId = msg.chat.id;
     
@@ -102,9 +148,9 @@ bot.onText(/\/status/, async (msg) => {
             `📊 Статус системы:\n\n` +
             `🤖 Бот: ✅ Работает\n` +
             `🌐 Сервер: ${isConnected ? '✅ Доступен' : '❌ Недоступен'}\n` +
-            `🔗 Платформа: ${process.env.RENDER ? 'Render' : process.env.RAILWAY_STATIC_URL ? 'Railway' : 'Локальная'}\n` +
+            `🔗 URL: ${SERVER_URL}\n` +
             `⏰ Время: ${new Date().toLocaleTimeString()}\n\n` +
-            `${isConnected ? '✅ Все системы работают нормально' : '⚠️  Проблемы с подключением к серверу'}`
+            `${isConnected ? '✅ Все системы работают' : '⚠️  Проблемы с подключением к серверу'}`
         );
     } catch (error) {
         bot.sendMessage(chatId, '❌ Ошибка при проверке статуса');
@@ -118,14 +164,13 @@ bot.onText(/\/help/, (msg) => {
     bot.sendMessage(chatId,
         `📖 Доступные команды:\n\n` +
         `/start - начать работу с ботом\n` +
-        `/link КОД - привязать аккаунт (код с сайта)\n` +
+        `/link КОД - привязать аккаунт\n` +
         `/status - проверить статус системы\n` +
         `/help - показать эту справку\n\n` +
         `💡 Для восстановления пароля:\n` +
         `1. На сайте нажмите "Забыли пароль?"\n` +
         `2. Введите ваш email\n` +
-        `3. Код автоматически придет в этот чат\n` +
-        `4. Введите код на сайте`
+        `3. Код автоматически придет в этот чат`
     );
 });
 
@@ -137,7 +182,6 @@ bot.onText(/\/link (.+)/, async (msg, match) => {
     console.log(`🔗 Получена команда /link ${linkCode} от chatId: ${chatId}`);
     
     try {
-        // Сначала проверяем доступность сервера
         const isConnected = await checkServerConnection();
         if (!isConnected) {
             throw new Error('Сервер недоступен');
@@ -153,85 +197,42 @@ bot.onText(/\/link (.+)/, async (msg, match) => {
             timeout: 10000
         });
         
-        console.log('📡 Статус ответа сервера:', response.status);
+        console.log('📡 Статус ответа:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
         
         const data = await response.json();
-        console.log('📊 Данные ответа:', data);
         
         if (data.success) {
             bot.sendMessage(chatId, 
-                `✅ Telegram успешно привязан к аккаунту:\n` +
+                `✅ Telegram успешно привязан!\n` +
                 `📧 ${data.email}\n` +
-                `👤 ${data.name}\n\n` +
-                `Теперь вы можете восстанавливать пароль! Для этого:\n` +
-                `1. На сайте нажмите "Забыли пароль?"\n` +
-                `2. Введите ваш email: ${data.email}\n` +
-                `3. Код придет сюда автоматически`
+                `👤 ${data.name}`
             );
         } else {
-            bot.sendMessage(chatId, 
-                `❌ Ошибка: ${data.error || 'Неизвестная ошибка'}\n\n` +
-                `Убедитесь что:\n` +
-                `• Вы завершили регистрацию на сайте\n` +
-                `• Используете правильный код привязки\n` +
-                `• Код не просрочен (действует 10 минут)\n` +
-                `• Telegram еще не привязан к другому аккаунту`
-            );
+            bot.sendMessage(chatId, `❌ Ошибка: ${data.error || 'Неизвестная ошибка'}`);
         }
     } catch (error) {
         console.error('❌ Ошибка привязки:', error);
-        
-        let errorMessage = '❌ Ошибка соединения с сервером\n\n';
-        
-        if (process.env.RENDER || process.env.RAILWAY_STATIC_URL) {
-            errorMessage += `Платформа: ${process.env.RENDER ? 'Render' : 'Railway'}\n`;
-            errorMessage += 'Проверьте:\n';
-            errorMessage += '• Что сервер запущен\n';
-            errorMessage += '• Логи в панели управления\n';
-            errorMessage += '• Переменные окружения\n';
-        } else {
-            errorMessage += 'Убедитесь что:\n';
-            errorMessage += '• Сервер запущен на localhost:5000\n';
-            errorMessage += '• Бот и сервер на одном компьютере\n';
-        }
-        
-        errorMessage += '\nПопробуйте команду /status для проверки';
-        
-        bot.sendMessage(chatId, errorMessage);
+        bot.sendMessage(chatId, '❌ Ошибка соединения с сервером');
     }
 });
 
-// Обработка любых других сообщений
+// Обработка других сообщений
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
     
-    // Игнорируем команды
     if (text && !text.startsWith('/')) {
-        bot.sendMessage(chatId,
-            `🤖 Я бот для восстановления пароля СУДУ\n\n` +
-            `Используйте команды:\n` +
-            `/start - начать работу\n` +
-            `/link КОД - привязать аккаунт\n` +
-            `/status - проверить статус\n` +
-            `/help - помощь\n\n` +
-            `Для восстановления пароля используйте сайт!`
-        );
+        bot.sendMessage(chatId, 'Используйте /help для списка команд');
     }
 });
 
 // Обработка ошибок
 bot.on('polling_error', (error) => {
     console.error('❌ Ошибка polling Telegram:', error.code, error.message);
-    
-    // Автоматический перезапуск при некоторых ошибках
-    if (error.code === 'EFATAL' || error.code === 'ETELEGRAM') {
-        console.log('🔄 Попытка перезапуска бота через 10 секунд...');
-        setTimeout(() => {
-            console.log('🔄 Перезапуск бота...');
-            bot.startPolling();
-        }, 10000);
-    }
 });
 
 bot.on('webhook_error', (error) => {
@@ -240,19 +241,18 @@ bot.on('webhook_error', (error) => {
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-    console.log('🛑 Получен SIGTERM, останавливаю бота...');
+    console.log('🛑 SIGTERM, останавливаю бота...');
     bot.stopPolling();
     process.exit(0);
 });
 
 process.on('SIGINT', () => {
-    console.log('🛑 Получен SIGINT, останавливаю бота...');
+    console.log('🛑 SIGINT, останавливаю бота...');
     bot.stopPolling();
     process.exit(0);
 });
 
-console.log('🤖 Telegram Bot успешно запущен!');
-console.log('👤 Токен бота:', token.substring(0, 10) + '...'); // Показываем только начало токена
+console.log('\n✅ Telegram Bot успешно запущен!');
+console.log('📱 Перейдите в Telegram и отправьте /start вашему боту');
 
-// Экспортируем бота для использования в index.js
 module.exports = bot;
