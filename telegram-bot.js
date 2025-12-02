@@ -1,4 +1,3 @@
-
 // telegram-bot.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
 const path = require('path');
 const fs = require('fs');

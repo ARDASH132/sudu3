@@ -11,17 +11,6 @@ const cors = require('cors');
 app.use(cors({ origin: '*', credentials: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
-// Отладочный middleware для логирования всех запросов
-app.use((req, res, next) => {
-    console.log('\n📨 Входящий запрос:');
-    console.log('  Метод:', req.method);
-    console.log('  URL:', req.url);
-    console.log('  Path:', req.path);
-    console.log('  Полный URL:', req.originalUrl);
-    console.log('  Headers:', JSON.stringify(req.headers, null, 2).substring(0, 200) + '...');
-    console.log('  Body:', JSON.stringify(req.body, null, 2).substring(0, 200) + '...');
-    next();
-});
 app.use(express.static(path.join(__dirname)));
 app.use(express.static('.'));
 
@@ -94,16 +83,7 @@ initializeDatabase();
 
 async function sendTelegramMessage(chatId, message) {
     try {
-        const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-        
-        if (!TELEGRAM_TOKEN) {
-            console.error('❌ TELEGRAM_BOT_TOKEN не найден в переменных окружения');
-            throw new Error('TELEGRAM_BOT_TOKEN не настроен');
-        }
-        
-        console.log(`📤 Отправка сообщения в Telegram через токен: ${TELEGRAM_TOKEN.substring(0, 10)}...`);
-        console.log(`👤 Chat ID: ${chatId}`);
-        
+        const TELEGRAM_TOKEN = '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
         const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: {
@@ -117,19 +97,19 @@ async function sendTelegramMessage(chatId, message) {
         });
         
         const result = await response.json();
-        console.log('📤 Результат отправки в Telegram:', result.ok ? '✅ Успешно' : '❌ Ошибка');
+        console.log('📤 Результат отправки в Telegram:', result);
         
         if (!result.ok) {
-            console.error('❌ Ошибка Telegram API:', result.description);
             throw new Error(result.description || 'Unknown Telegram error');
         }
         
         return result;
     } catch (error) {
-        console.error('❌ Ошибка отправки Telegram сообщения:', error.message);
+        console.error('❌ Ошибка отправки Telegram сообщения:', error);
         throw error;
     }
 }
+
 // ==================== API ROUTES ====================
 
 // Health check
@@ -265,14 +245,9 @@ app.post('/api/auth/request-telegram-link', (req, res) => {
 app.post('/api/auth/confirm-telegram-link', (req, res) => {
     const { linkCode, telegram_chat_id } = req.body;
     
-    console.log('\n=== 🔗 ПОДТВЕРЖДЕНИЕ ПРИВЯЗКИ TELEGRAM ===');
-    console.log('📋 Входные данные:');
-    console.log('- Код:', linkCode);
-    console.log('- Chat ID:', telegram_chat_id);
-    console.log('- Время:', new Date().toISOString());
+    console.log('🔗 Подтверждение привязки, код:', linkCode, 'chat_id:', telegram_chat_id);
     
     if (!linkCode || !telegram_chat_id) {
-        console.log('❌ Ошибка: отсутствуют обязательные параметры');
         return res.status(400).json({ 
             success: false, 
             error: 'Отсутствуют обязательные параметры' 
@@ -280,111 +255,45 @@ app.post('/api/auth/confirm-telegram-link', (req, res) => {
     }
     
     try {
-        // 1. Показать ВСЕ коды в базе (не только актуальные)
-        const allCodes = db.prepare(`
-            SELECT tlc.id, tlc.code, tlc.used, 
-                   tlc.expires_at, tlc.user_id,
-                   u.email as user_email
-            FROM telegram_link_codes tlc 
-            LEFT JOIN users u ON tlc.user_id = u.id 
-            ORDER BY tlc.id DESC LIMIT 20
-        `).all();
-        
-        console.log('\n📋 ВСЕ коды в БД (последние 20):');
-        allCodes.forEach((code, i) => {
-            console.log(`${i+1}. Код: "${code.code}", Использован: ${code.used}, Истекает: ${code.expires_at}, Email: ${code.user_email || 'нет'}`);
-        });
-        
-        // 2. Поиск нашего кода
-        console.log('\n🔍 Поиск кода "' + linkCode + '" в базе...');
         const codeRecord = db.prepare(`
-            SELECT tlc.*, u.email, u.name
+            SELECT tlc.*, u.email, u.name 
             FROM telegram_link_codes tlc 
-            LEFT JOIN users u ON tlc.user_id = u.id 
-            WHERE tlc.code = ?
+            JOIN users u ON tlc.user_id = u.id 
+            WHERE tlc.code = ? AND tlc.used = FALSE AND tlc.expires_at > datetime('now')
         `).get(linkCode);
         
         if (!codeRecord) {
-            console.log('❌ Код НЕ НАЙДЕН в базе данных!');
-            console.log('💡 Возможные причины:');
-            console.log('   1. Код введен неправильно');
-            console.log('   2. База данных очищена/пересоздана');
-            console.log('   3. Проблема с синхронизацией БД');
             return res.status(400).json({ 
                 success: false, 
                 error: 'Неверный или просроченный код привязки' 
             });
         }
         
-        console.log('✅ Код найден! Данные:');
-        console.log('- ID записи:', codeRecord.id);
-        console.log('- Код:', codeRecord.code);
-        console.log('- Использован:', codeRecord.used);
-        console.log('- Истекает:', codeRecord.expires_at);
-        console.log('- Пользователь ID:', codeRecord.user_id);
-        console.log('- Email:', codeRecord.email);
-        console.log('- Имя:', codeRecord.name);
-        
-        // 3. Проверка использования
-        if (codeRecord.used) {
-            console.log('❌ Код уже был использован ранее');
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Этот код уже использован. Запросите новый код.' 
-            });
-        }
-        
-        // 4. Проверка срока действия
-        const expiresAt = new Date(codeRecord.expires_at);
-        const now = new Date();
-        const timeLeft = (expiresAt - now) / 60000; // в минутах
-        
-        console.log('\n⏰ Проверка срока действия:');
-        console.log('- Время истечения:', expiresAt.toISOString());
-        console.log('- Текущее время:', now.toISOString());
-        console.log('- Осталось минут:', Math.round(timeLeft));
-        
-        if (expiresAt <= now) {
-            console.log('❌ Код просрочен!');
-            console.log('- Просрочен на', Math.abs(Math.round(timeLeft)), 'минут');
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Код просрочен. Запросите новый код.' 
-            });
-        }
-        
-        // 5. Проверка на дублирование привязки
-        const existingUser = db.prepare("SELECT email, name FROM users WHERE telegram_chat_id = ?").get(telegram_chat_id);
+        const existingUser = db.prepare("SELECT email FROM users WHERE telegram_chat_id = ?").get(telegram_chat_id);
         
         if (existingUser) {
-            console.log('❌ Этот Telegram уже привязан к:', existingUser.email);
             return res.status(400).json({ 
                 success: false, 
-                error: `Этот Telegram уже привязан к аккаунту ${existingUser.email}` 
+                error: 'Этот Telegram уже привязан к другому аккаунту' 
             });
         }
-        
-        // 6. ВСЁ ОК - выполняем привязку
-        console.log('\n✅ Все проверки пройдены! Привязываю...');
         
         db.prepare("UPDATE users SET telegram_chat_id = ? WHERE id = ?").run(telegram_chat_id, codeRecord.user_id);
         db.prepare("UPDATE telegram_link_codes SET used = TRUE WHERE id = ?").run(codeRecord.id);
         
-        console.log('🎉 Telegram успешно привязан!');
-        console.log('- Пользователь:', codeRecord.email);
-        console.log('- Chat ID:', telegram_chat_id);
+        console.log('✅ Telegram привязан к пользователю:', codeRecord.email);
         
-        // 7. Отправка подтверждения
-        console.log('\n📤 Отправляю приветственное сообщение...');
         sendTelegramMessage(telegram_chat_id,
             `✅ Telegram успешно привязан!\n\n` +
             `📧 Аккаунт: ${codeRecord.email}\n` +
             `👤 Имя: ${codeRecord.name}\n\n` +
-            `Теперь вы можете восстанавливать пароль через сайт!`
-        ).then(() => {
-            console.log('✅ Сообщение отправлено');
-        }).catch(err => {
-            console.error('⚠️ Ошибка отправки:', err.message);
+            `Теперь вы можете восстанавливать пароль через сайт!\n\n` +
+            `Для восстановления:\n` +
+            `1. Нажмите "Забыли пароль?" на сайте\n` +
+            `2. Введите email: ${codeRecord.email}\n` +
+            `3. Код придет сюда автоматически`
+        ).catch(err => {
+            console.error('Ошибка отправки приветственного сообщения:', err);
         });
         
         res.json({ 
@@ -393,13 +302,11 @@ app.post('/api/auth/confirm-telegram-link', (req, res) => {
             email: codeRecord.email,
             name: codeRecord.name
         });
-        
     } catch (err) {
-        console.error('\n❌ КРИТИЧЕСКАЯ ОШИБКА:', err);
-        console.error(err.stack);
+        console.error('❌ Ошибка:', err);
         res.status(500).json({ 
             success: false, 
-            error: 'Внутренняя ошибка сервера' 
+            error: 'Ошибка сервера' 
         });
     }
 });
@@ -623,182 +530,6 @@ app.get('/api/test-telegram', (req, res) => {
         });
 });
 
-
-// ==================== ОТЛАДОЧНЫЕ ENDPOINT'Ы ====================
-
-// Отладка кодов
-app.get('/api/debug/codes', (req, res) => {
-    try {
-        console.log('\n=== 🔍 ОТЛАДКА КОДОВ ===');
-        
-        // 1. Проверим структуру таблицы
-        const tableInfo = db.prepare("PRAGMA table_info(telegram_link_codes)").all();
-        console.log('📋 Структура таблицы telegram_link_codes:');
-        tableInfo.forEach(col => {
-            console.log(`  - ${col.name} (${col.type})`);
-        });
-        
-        // 2. Посчитаем записи
-        const count = db.prepare("SELECT COUNT(*) as count FROM telegram_link_codes").get();
-        console.log('📊 Всего записей в таблице:', count.count);
-        
-        // 3. Показать все записи
-        const allCodes = db.prepare(`
-            SELECT 
-                tlc.id,
-                tlc.code,
-                tlc.used,
-                tlc.expires_at,
-                tlc.created_at,
-                u.email as user_email,
-                u.telegram_chat_id
-            FROM telegram_link_codes tlc 
-            LEFT JOIN users u ON tlc.user_id = u.id 
-            ORDER BY tlc.id DESC
-        `).all();
-        
-        console.log('\n📋 ВСЕ записи:');
-        if (allCodes.length === 0) {
-            console.log('   Таблица ПУСТА!');
-        } else {
-            allCodes.forEach(code => {
-                console.log(`  ID: ${code.id}, Код: "${code.code}", Использован: ${code.used}, Email: ${code.user_email || 'нет'}`);
-            });
-        }
-        
-        // 4. Проверим пользователей
-        const users = db.prepare("SELECT id, email, telegram_chat_id FROM users").all();
-        console.log('\n👤 Пользователи:');
-        users.forEach(user => {
-            console.log(`  ID: ${user.id}, Email: ${user.email}, Chat ID: ${user.telegram_chat_id || 'не привязан'}`);
-        });
-        
-        res.json({
-            success: true,
-            codes_count: count.count,
-            codes: allCodes,
-            users: users,
-            table_structure: tableInfo
-        });
-        
-    } catch (err) {
-        console.error('❌ Ошибка отладки:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// Тестовый endpoint для создания кода
-app.post('/api/debug/create-code', (req, res) => {
-    const { email, code } = req.body;
-    
-    try {
-        console.log('\n=== 🧪 ТЕСТОВОЕ СОЗДАНИЕ КОДА ===');
-        
-        // Найти пользователя
-        const user = db.prepare("SELECT id, email FROM users WHERE email = ?").get(email);
-        
-        if (!user) {
-            console.log('❌ Пользователь не найден:', email);
-            return res.json({ error: 'Пользователь не найден' });
-        }
-        
-        console.log('👤 Пользователь найден:', user);
-        
-        // Создать код
-        const testCode = code || Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 минут
-        
-        console.log('🔢 Создаю код:', testCode);
-        console.log('⏰ Истекает:', expiresAt.toISOString());
-        
-        const stmt = db.prepare("INSERT INTO telegram_link_codes (user_id, code, expires_at) VALUES (?, ?, ?)");
-        const result = stmt.run(user.id, testCode, expiresAt.toISOString());
-        
-        console.log('✅ Код создан! ID записи:', result.lastInsertRowid);
-        
-        // Проверить
-        const saved = db.prepare("SELECT * FROM telegram_link_codes WHERE id = ?").get(result.lastInsertRowid);
-        console.log('📋 Проверка сохранения:', saved);
-        
-        res.json({
-            success: true,
-            message: 'Тестовый код создан',
-            code: testCode,
-            expires_at: expiresAt,
-            record_id: result.lastInsertRowid,
-            data: saved
-        });
-        
-    } catch (err) {
-        console.error('❌ Ошибка:', err);
-        res.json({ error: err.message });
-    }
-});
-
-// Очистка кодов (только для отладки)
-app.get('/api/debug/clear-codes', (req, res) => {
-    try {
-        console.log('\n=== 🧹 ОЧИСТКА КОДОВ ===');
-        const result = db.prepare("DELETE FROM telegram_link_codes").run();
-        console.log('✅ Удалено записей:', result.changes);
-        res.json({ 
-            success: true, 
-            message: 'Коды очищены',
-            deleted: result.changes 
-        });
-    } catch (err) {
-        console.error('❌ Ошибка:', err);
-        res.json({ error: err.message });
-    }
-});
-
-// Проверка конкретного пользователя
-app.get('/api/debug/user/:email', (req, res) => {
-    const email = req.params.email;
-    
-    try {
-        console.log('\n=== 👤 ПРОВЕРКА ПОЛЬЗОВАТЕЛЯ ===');
-        console.log('Email:', email);
-        
-        const user = db.prepare(`
-            SELECT u.*, 
-                   (SELECT COUNT(*) FROM telegram_link_codes WHERE user_id = u.id) as codes_count,
-                   (SELECT COUNT(*) FROM telegram_link_codes WHERE user_id = u.id AND used = 0) as active_codes
-            FROM users u 
-            WHERE u.email = ?
-        `).get(email);
-        
-        if (!user) {
-            console.log('❌ Пользователь не найден');
-            return res.json({ error: 'Пользователь не найден' });
-        }
-        
-        console.log('✅ Пользователь найден:', user);
-        
-        // Получить все коды этого пользователя
-        const userCodes = db.prepare(`
-            SELECT * FROM telegram_link_codes 
-            WHERE user_id = ? 
-            ORDER BY id DESC
-        `).all(user.id);
-        
-        console.log('🔢 Коды пользователя:');
-        userCodes.forEach(code => {
-            console.log(`  Код: "${code.code}", Использован: ${code.used}, Истекает: ${code.expires_at}`);
-        });
-        
-        res.json({
-            success: true,
-            user: user,
-            codes: userCodes,
-            codes_count: userCodes.length
-        });
-        
-    } catch (err) {
-        console.error('❌ Ошибка:', err);
-        res.json({ error: err.message });
-    }
-});
 // Обработка 404 для API
 app.use('/api/*', (req, res) => {
     res.status(404).json({ error: 'API endpoint not found' });
@@ -808,7 +539,8 @@ app.use('/api/*', (req, res) => {
 app.use('*', (req, res) => {
     res.status(404).sendFile(path.join(__dirname, 'index.html'));
 });
+
 // Запуск сервера
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🎯 Сервер запущен на порту ${PORT} (слушает все интерфейсы)`);
+app.listen(PORT, () => {
+    console.log(`🎯 Сервер запущен на порту ${PORT}`);
 });
