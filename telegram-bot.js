@@ -1,3 +1,49 @@
+// telegram-bot.js - в начале файла после проверки токена
+
+// Проверяем, нет ли уже запущенного бота
+console.log('\n🔍 Проверка запущенных процессов...');
+
+// Создаем файл-лок для предотвращения множественных запусков
+const lockFile = path.join(__dirname, 'bot.lock');
+let lockFileHandle = null;
+
+try {
+    // Пытаемся создать lock файл
+    lockFileHandle = fs.openSync(lockFile, 'wx');
+    console.log('✅ Lock файл создан, бот может быть запущен');
+    
+    // Удаляем lock файл при завершении
+    const cleanup = () => {
+        if (lockFileHandle) {
+            fs.closeSync(lockFileHandle);
+            if (fs.existsSync(lockFile)) {
+                fs.unlinkSync(lockFile);
+                console.log('🧹 Lock файл удален');
+            }
+        }
+    };
+    
+    process.on('SIGINT', () => {
+        cleanup();
+        process.exit(0);
+    });
+    
+    process.on('SIGTERM', () => {
+        cleanup();
+        process.exit(0);
+    });
+    
+    process.on('exit', cleanup);
+    
+} catch (err) {
+    if (err.code === 'EEXIST') {
+        console.error('❌ Бот уже запущен!');
+        console.log('ℹ️  Если это не так, удалите файл:', lockFile);
+        process.exit(1);
+    } else {
+        console.error('❌ Ошибка создания lock файла:', err.message);
+    }
+}
 // telegram-bot.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
 const path = require('path');
 const fs = require('fs');
