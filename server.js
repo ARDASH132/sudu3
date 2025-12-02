@@ -195,6 +195,7 @@ setInterval(cleanupPendingRegistrations, 5* 60 * 1000);
 cleanupPendingRegistrations();
 
 // Регистрация пользователя (временная, без добавления в users)
+// Регистрация пользователя (временная, без добавления в users)
 app.post('/api/auth/register', (req, res) => {
     const { full_name, email, password } = req.body;
     
@@ -240,7 +241,8 @@ app.post('/api/auth/register', (req, res) => {
             message: 'Регистрация успешна! Теперь привяжите Telegram.',
             linkCode: linkCode,
             instructions: `Отправьте боту команду: /link ${linkCode}`,
-            expiresIn: '15 минут'
+            expiresIn: '15 минут',
+            nextStep: 'telegram_link' // 🔴 ВАЖНО: Добавляем признак следующего шага
         });
     } catch (err) {
         console.error('❌ Ошибка регистрации:', err);
