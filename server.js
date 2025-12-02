@@ -83,7 +83,16 @@ initializeDatabase();
 
 async function sendTelegramMessage(chatId, message) {
     try {
-        const TELEGRAM_TOKEN = '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
+        const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+        
+        if (!TELEGRAM_TOKEN) {
+            console.error('❌ TELEGRAM_BOT_TOKEN не найден в переменных окружения');
+            throw new Error('TELEGRAM_BOT_TOKEN не настроен');
+        }
+        
+        console.log(`📤 Отправка сообщения в Telegram через токен: ${TELEGRAM_TOKEN.substring(0, 10)}...`);
+        console.log(`👤 Chat ID: ${chatId}`);
+        
         const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: {
@@ -97,19 +106,19 @@ async function sendTelegramMessage(chatId, message) {
         });
         
         const result = await response.json();
-        console.log('📤 Результат отправки в Telegram:', result);
+        console.log('📤 Результат отправки в Telegram:', result.ok ? '✅ Успешно' : '❌ Ошибка');
         
         if (!result.ok) {
+            console.error('❌ Ошибка Telegram API:', result.description);
             throw new Error(result.description || 'Unknown Telegram error');
         }
         
         return result;
     } catch (error) {
-        console.error('❌ Ошибка отправки Telegram сообщения:', error);
+        console.error('❌ Ошибка отправки Telegram сообщения:', error.message);
         throw error;
     }
 }
-
 // ==================== API ROUTES ====================
 
 // Health check
