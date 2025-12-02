@@ -1,3 +1,4 @@
+
 // telegram-bot.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
 const path = require('path');
 const fs = require('fs');
@@ -75,17 +76,37 @@ const bot = new TelegramBot(token, {
     }
 });
 
-// Определяем URL сервера
+// 🔴 ИСПРАВЛЕНО: Правильное определение SERVER_URL
 let SERVER_URL;
+
+// Проверяем, запущено ли на Render
 if (process.env.RENDER) {
-    SERVER_URL = `http://localhost:${process.env.PORT || 5000}`;
+    SERVER_URL = `https://${process.env.RENDER_SERVICE_NAME}.onrender.com`;
     console.log('🚀 Платформа: Render');
-} else if (process.env.RAILWAY_STATIC_URL) {
-    SERVER_URL = `http://localhost:${process.env.PORT || 5000}`;
+    console.log('🌐 Внешний URL:', SERVER_URL);
+} 
+// Проверяем, запущено ли на Railway
+else if (process.env.RAILWAY_STATIC_URL) {
+    SERVER_URL = process.env.RAILWAY_STATIC_URL;
     console.log('🚄 Платформа: Railway');
-} else {
-    SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
+    console.log('🌐 Внешний URL:', SERVER_URL);
+} 
+// Проверяем, есть ли в .env SERVER_URL
+else if (process.env.SERVER_URL) {
+    SERVER_URL = process.env.SERVER_URL;
     console.log('💻 Режим: Локальная разработка');
+    console.log('🌐 URL из .env:', SERVER_URL);
+} 
+// По умолчанию используем localhost
+else {
+    SERVER_URL = 'http://localhost:5000';
+    console.log('💻 Режим: Локальная разработка (по умолчанию)');
+    console.log('🌐 URL:', SERVER_URL);
+}
+
+// Убедимся, что URL заканчивается на /
+if (!SERVER_URL.endsWith('/')) {
+    SERVER_URL = SERVER_URL + '/';
 }
 
 console.log('🔗 Подключение к серверу:', SERVER_URL);
@@ -95,7 +116,15 @@ console.log('📡 Режим бота: Polling');
 async function checkServerConnection() {
     try {
         console.log('🔍 Проверка соединения с сервером...');
-        const response = await fetch(`${SERVER_URL}/api/health`, { timeout: 5000 });
+        const url = `${SERVER_URL}api/health`;
+        console.log('🌐 Запрос к:', url);
+        
+        const response = await fetch(url, { 
+            timeout: 10000,
+            headers: {
+                'User-Agent': 'TelegramBot/1.0'
+            }
+        });
         
         if (response.ok) {
             const data = await response.json();
@@ -117,6 +146,8 @@ checkServerConnection().then(isConnected => {
     if (!isConnected) {
         console.log('⚠️  Предупреждение: сервер недоступен');
         console.log('ℹ️  Убедитесь что сервер запущен на', SERVER_URL);
+        console.log('ℹ️  Проверьте что сервер слушает все интерфейсы (0.0.0.0)');
+        console.log('ℹ️  Проверьте настройки файрвола и порты');
     }
 });
 
@@ -182,25 +213,28 @@ bot.onText(/\/link (.+)/, async (msg, match) => {
     console.log(`🔗 Получена команда /link ${linkCode} от chatId: ${chatId}`);
     
     try {
-        const isConnected = await checkServerConnection();
-        if (!isConnected) {
-            throw new Error('Сервер недоступен');
-        }
+        const url = `${SERVER_URL}api/auth/confirm-telegram-link`;
+        console.log('🌐 Отправка запроса на:', url);
         
-        const response = await fetch(`${SERVER_URL}/api/auth/confirm-telegram-link`, {
+        const response = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'User-Agent': 'TelegramBot/1.0'
+            },
             body: JSON.stringify({ 
                 linkCode: linkCode,
                 telegram_chat_id: chatId 
             }),
-            timeout: 10000
+            timeout: 15000
         });
         
         console.log('📡 Статус ответа:', response.status);
         
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            const errorText = await response.text();
+            console.error('❌ Ошибка ответа:', errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
         
         const data = await response.json();
@@ -216,7 +250,7 @@ bot.onText(/\/link (.+)/, async (msg, match) => {
         }
     } catch (error) {
         console.error('❌ Ошибка привязки:', error);
-        bot.sendMessage(chatId, '❌ Ошибка соединения с сервером');
+        bot.sendMessage(chatId, `❌ Ошибка соединения с сервером: ${error.message}`);
     }
 });
 
