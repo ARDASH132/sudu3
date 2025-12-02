@@ -190,7 +190,7 @@ function cleanupPendingRegistrations() {
 }
 
 // Запускаем очистку каждые 5 минут
-setInterval(cleanupPendingRegistrations, 0.1* 60 * 1000);
+setInterval(cleanupPendingRegistrations, 5* 60 * 1000);
 // И при старте
 cleanupPendingRegistrations();
 
