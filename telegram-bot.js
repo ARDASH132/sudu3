@@ -1,55 +1,13 @@
-// telegram-bot.js - в начале файла после проверки токена
-
-// Проверяем, нет ли уже запущенного бота
-console.log('\n🔍 Проверка запущенных процессов...');
-
-// Создаем файл-лок для предотвращения множественных запусков
-const lockFile = path.join(__dirname, 'bot.lock');
-let lockFileHandle = null;
-
-try {
-    // Пытаемся создать lock файл
-    lockFileHandle = fs.openSync(lockFile, 'wx');
-    console.log('✅ Lock файл создан, бот может быть запущен');
-    
-    // Удаляем lock файл при завершении
-    const cleanup = () => {
-        if (lockFileHandle) {
-            fs.closeSync(lockFileHandle);
-            if (fs.existsSync(lockFile)) {
-                fs.unlinkSync(lockFile);
-                console.log('🧹 Lock файл удален');
-            }
-        }
-    };
-    
-    process.on('SIGINT', () => {
-        cleanup();
-        process.exit(0);
-    });
-    
-    process.on('SIGTERM', () => {
-        cleanup();
-        process.exit(0);
-    });
-    
-    process.on('exit', cleanup);
-    
-} catch (err) {
-    if (err.code === 'EEXIST') {
-        console.error('❌ Бот уже запущен!');
-        console.log('ℹ️  Если это не так, удалите файл:', lockFile);
-        process.exit(1);
-    } else {
-        console.error('❌ Ошибка создания lock файла:', err.message);
-    }
-}
 // telegram-bot.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
 const path = require('path');
 const fs = require('fs');
 
 console.log('🚀 Запуск Telegram бота...');
 console.log('📁 Текущая директория:', __dirname);
+
+// Создаем файл-лок для предотвращения множественных запусков
+const lockFile = path.join(__dirname, 'bot.lock');
+let lockFileHandle = null;
 
 // Проверяем .env файл
 const envPath = path.join(__dirname, '.env');
@@ -107,6 +65,47 @@ if (tokenParts.length !== 2) {
 
 console.log('✅ Формат токена правильный!');
 console.log('🤖 Bot ID:', tokenParts[0]);
+
+// Проверяем, нет ли уже запущенного бота
+console.log('\n🔍 Проверка запущенных процессов...');
+
+try {
+    // Пытаемся создать lock файл
+    lockFileHandle = fs.openSync(lockFile, 'wx');
+    console.log('✅ Lock файл создан, бот может быть запущен');
+    
+    // Удаляем lock файл при завершении
+    const cleanup = () => {
+        if (lockFileHandle) {
+            fs.closeSync(lockFileHandle);
+            if (fs.existsSync(lockFile)) {
+                fs.unlinkSync(lockFile);
+                console.log('🧹 Lock файл удален');
+            }
+        }
+    };
+    
+    process.on('SIGINT', () => {
+        cleanup();
+        process.exit(0);
+    });
+    
+    process.on('SIGTERM', () => {
+        cleanup();
+        process.exit(0);
+    });
+    
+    process.on('exit', cleanup);
+    
+} catch (err) {
+    if (err.code === 'EEXIST') {
+        console.error('❌ Бот уже запущен!');
+        console.log('ℹ️  Если это не так, удалите файл:', lockFile);
+        process.exit(1);
+    } else {
+        console.error('❌ Ошибка создания lock файла:', err.message);
+    }
+}
 
 // Создаем бота
 console.log('\n🚀 Создаем Telegram бота...');
@@ -251,7 +250,6 @@ bot.onText(/\/help/, (msg) => {
 });
 
 // Привязка аккаунта по коду
-// Привязка аккаунта по коду
 bot.onText(/\/link (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const linkCode = match[1].trim();
@@ -277,7 +275,6 @@ bot.onText(/\/link (.+)/, async (msg, match) => {
         
         console.log('📡 Статус ответа:', response.status);
         
-        // 🔴 ИСПРАВЬТЕ ЭТУ ЧАСТЬ:
         if (!response.ok) {
             // Пытаемся прочитать JSON с ошибкой
             let errorMessage = `HTTP ${response.status}`;
@@ -310,6 +307,11 @@ bot.onText(/\/link (.+)/, async (msg, match) => {
                 message = `ℹ️ ${data.message}\n📧 ${data.email}\n👤 ${data.name}`;
             }
             
+            // Если это новый пользователь
+            if (data.isNewUser) {
+                message += '\n\n🎉 Регистрация завершена! Теперь вы можете войти на сайт.';
+            }
+            
             bot.sendMessage(chatId, message);
         } else {
             bot.sendMessage(chatId, `❌ Ошибка: ${data.error || 'Неизвестная ошибка'}`);
@@ -328,6 +330,7 @@ bot.onText(/\/link (.+)/, async (msg, match) => {
         bot.sendMessage(chatId, `❌ Ошибка соединения: ${errorMsg}`);
     }
 });
+
 // Обработка других сообщений
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
@@ -341,6 +344,20 @@ bot.on('message', (msg) => {
 // Обработка ошибок
 bot.on('polling_error', (error) => {
     console.error('❌ Ошибка polling Telegram:', error.code, error.message);
+    
+    // Если это конфликт 409 - пробуем перезапустить
+    if (error.code === 'ETELEGRAM' && error.message.includes('409')) {
+        console.log('🔄 Конфликт 409: перезапуск polling через 5 секунд...');
+        
+        // Останавливаем текущий polling
+        bot.stopPolling();
+        
+        // Ждем и перезапускаем
+        setTimeout(() => {
+            console.log('🔄 Перезапуск бота...');
+            bot.startPolling();
+        }, 5000);
+    }
 });
 
 bot.on('webhook_error', (error) => {
