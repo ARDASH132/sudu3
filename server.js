@@ -83,7 +83,7 @@ initializeDatabase();
 
 async function sendTelegramMessage(chatId, message) {
     try {
-        const TELEGRAM_TOKEN = '8279629132:AAFskyTjyo-bcp38DDZdTPhf0xCPIwbnueg';
+        const TELEGRAM_TOKEN = '8522502658:AAGEDmPCiqsU8aZk5mCflXoE6HaJ06s4yoU';
         const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: {
