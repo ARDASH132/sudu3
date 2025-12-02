@@ -205,6 +205,7 @@ bot.onText(/\/help/, (msg) => {
 });
 
 // Привязка аккаунта по коду
+// Привязка аккаунта по коду
 bot.onText(/\/link (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const linkCode = match[1].trim();
@@ -230,29 +231,57 @@ bot.onText(/\/link (.+)/, async (msg, match) => {
         
         console.log('📡 Статус ответа:', response.status);
         
+        // 🔴 ИСПРАВЬТЕ ЭТУ ЧАСТЬ:
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Ошибка ответа:', errorText);
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
+            // Пытаемся прочитать JSON с ошибкой
+            let errorMessage = `HTTP ${response.status}`;
+            
+            try {
+                const errorData = await response.json();
+                if (errorData.error) {
+                    errorMessage = errorData.error;
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
+                }
+            } catch (e) {
+                // Если не удалось прочитать JSON, читаем как текст
+                const errorText = await response.text();
+                errorMessage = errorText || `HTTP ${response.status}`;
+            }
+            
+            // Отправляем понятное сообщение пользователю
+            bot.sendMessage(chatId, `❌ ${errorMessage}`);
+            return; // 🔴 ВАЖНО: завершаем выполнение
         }
         
         const data = await response.json();
         
         if (data.success) {
-            bot.sendMessage(chatId, 
-                `✅ Telegram успешно привязан!\n` +
-                `📧 ${data.email}\n` +
-                `👤 ${data.name}`
-            );
+            let message = `✅ Telegram успешно привязан!\n📧 ${data.email}\n👤 ${data.name}`;
+            
+            // Если Telegram уже был привязан
+            if (data.already_linked) {
+                message = `ℹ️ ${data.message}\n📧 ${data.email}\n👤 ${data.name}`;
+            }
+            
+            bot.sendMessage(chatId, message);
         } else {
             bot.sendMessage(chatId, `❌ Ошибка: ${data.error || 'Неизвестная ошибка'}`);
         }
     } catch (error) {
         console.error('❌ Ошибка привязки:', error);
-        bot.sendMessage(chatId, `❌ Ошибка соединения с сервером: ${error.message}`);
+        
+        // Проверяем тип ошибки
+        let errorMsg = error.message;
+        if (error.name === 'FetchError' && error.code === 'ECONNREFUSED') {
+            errorMsg = 'Сервер недоступен. Проверьте, запущен ли сервер.';
+        } else if (error.name === 'TimeoutError') {
+            errorMsg = 'Таймаут соединения с сервером.';
+        }
+        
+        bot.sendMessage(chatId, `❌ Ошибка соединения: ${errorMsg}`);
     }
 });
-
 // Обработка других сообщений
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;

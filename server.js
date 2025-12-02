@@ -22,6 +22,20 @@ console.log('✅ Подключение к SQLite установлено');
 
 function initializeDatabase() {
     try {
+        // Таблица для временных регистраций
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS pending_registrations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                link_code VARCHAR(6) NOT NULL,
+                expires_at DATETIME NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('✅ Таблица pending_registrations готова');
+        
         // Таблица пользователей
         db.exec(`
             CREATE TABLE IF NOT EXISTS users (
@@ -159,7 +173,28 @@ app.get('/api/users', (req, res) => {
 
 // ==================== РЕГИСТРАЦИЯ И ПРИВЯЗКА TELEGRAM ====================
 
-// Регистрация пользователя
+// Функция очистки просроченных регистраций
+function cleanupPendingRegistrations() {
+    try {
+        const result = db.prepare(`
+            DELETE FROM pending_registrations 
+            WHERE expires_at <= datetime('now')
+        `).run();
+        
+        if (result.changes > 0) {
+            console.log(`🧹 Очищено ${result.changes} просроченных регистраций`);
+        }
+    } catch (err) {
+        console.error('❌ Ошибка очистки временных регистраций:', err);
+    }
+}
+
+// Запускаем очистку каждые 5 минут
+setInterval(cleanupPendingRegistrations, 0.1* 60 * 1000);
+// И при старте
+cleanupPendingRegistrations();
+
+// Регистрация пользователя (временная, без добавления в users)
 app.post('/api/auth/register', (req, res) => {
     const { full_name, email, password } = req.body;
     
@@ -171,47 +206,69 @@ app.post('/api/auth/register', (req, res) => {
     }
     
     try {
-        const stmt = db.prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
-        const result = stmt.run(full_name, email, password);
+        // Проверяем, нет ли уже такого email в основной базе
+        const existingUser = db.prepare("SELECT id FROM users WHERE email = ?").get(email);
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                error: 'Пользователь с таким email уже существует'
+            });
+        }
         
-        console.log('✅ Пользователь зарегистрирован:', email, 'ID:', result.lastInsertRowid);
+        // Проверяем, нет ли в ожидающих регистрации
+        const existingPending = db.prepare("SELECT id FROM pending_registrations WHERE email = ?").get(email);
+        if (existingPending) {
+            // Удаляем старую запись
+            db.prepare("DELETE FROM pending_registrations WHERE email = ?").run(email);
+        }
+        
+        // Генерируем код для привязки Telegram
+        const linkCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 минут
+        
+        // Сохраняем во временную таблицу
+        const stmt = db.prepare(`
+            INSERT INTO pending_registrations (name, email, password, link_code, expires_at) 
+            VALUES (?, ?, ?, ?, ?)
+        `);
+        const result = stmt.run(full_name, email, password, linkCode, expiresAt.toISOString());
+        
+        console.log('✅ Временная регистрация:', email, 'Код:', linkCode);
         
         res.json({
             success: true,
             message: 'Регистрация успешна! Теперь привяжите Telegram.',
-            user_id: result.lastInsertRowid
+            linkCode: linkCode,
+            instructions: `Отправьте боту команду: /link ${linkCode}`,
+            expiresIn: '15 минут'
         });
     } catch (err) {
-        if (err.message.includes('UNIQUE constraint failed')) {
-            res.status(400).json({
-                success: false,
-                error: 'Пользователь с таким email уже существует'
-            });
-        } else {
-            res.status(400).json({
-                success: false,
-                error: 'Ошибка регистрации: ' + err.message
-            });
-        }
+        console.error('❌ Ошибка регистрации:', err);
+        res.status(400).json({
+            success: false,
+            error: 'Ошибка регистрации: ' + err.message
+        });
     }
 });
 
-// Запрос кода для привязки Telegram
+// Запрос кода для привязки Telegram (для существующих пользователей)
 app.post('/api/auth/request-telegram-link', (req, res) => {
     const { email } = req.body;
     
-    console.log('🔗 Запрос кода привязки для:', email);
+    console.log('🔗 Запрос кода привязки для существующего пользователя:', email);
     
     try {
+        // Ищем пользователя в основной базе
         const user = db.prepare("SELECT id, name FROM users WHERE email = ?").get(email);
         
         if (!user) {
             return res.status(400).json({
                 success: false,
-                error: 'Пользователь не найден. Сначала завершите регистрацию.'
+                error: 'Пользователь не найден. Зарегистрируйтесь сначала.'
             });
         }
         
+        // Проверяем, не привязан ли уже Telegram
         const existingLink = db.prepare("SELECT telegram_chat_id FROM users WHERE id = ? AND telegram_chat_id IS NOT NULL").get(user.id);
         
         if (existingLink) {
@@ -221,13 +278,15 @@ app.post('/api/auth/request-telegram-link', (req, res) => {
             });
         }
         
+        // Генерируем код привязки
         const linkCode = Math.floor(100000 + Math.random() * 900000).toString();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
         
+        // Сохраняем код в таблицу telegram_link_codes
         const stmt = db.prepare("INSERT INTO telegram_link_codes (user_id, code, expires_at) VALUES (?, ?, ?)");
         stmt.run(user.id, linkCode, expiresAt.toISOString());
         
-        console.log('✅ Код привязки сгенерирован:', linkCode, 'для пользователя:', user.id);
+        console.log('✅ Код привязки для существующего пользователя:', linkCode);
         
         res.json({ 
             success: true, 
@@ -241,47 +300,123 @@ app.post('/api/auth/request-telegram-link', (req, res) => {
     }
 });
 
-// Подтверждение привязки Telegram
-app.post('/api/auth/confirm-telegram-link', (req, res) => {
-    const { linkCode, telegram_chat_id } = req.body;
-    
-    console.log('🔗 Подтверждение привязки, код:', linkCode, 'chat_id:', telegram_chat_id);
-    
-    if (!linkCode || !telegram_chat_id) {
-        return res.status(400).json({ 
-            success: false, 
-            error: 'Отсутствуют обязательные параметры' 
-        });
-    }
-    
+// Функция обработки новой регистрации
+function processNewUserRegistration(pendingUser, telegram_chat_id, res) {
     try {
-        const codeRecord = db.prepare(`
-            SELECT tlc.*, u.email, u.name 
-            FROM telegram_link_codes tlc 
-            JOIN users u ON tlc.user_id = u.id 
-            WHERE tlc.code = ? AND tlc.used = FALSE AND tlc.expires_at > datetime('now')
-        `).get(linkCode);
-        
-        if (!codeRecord) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Неверный или просроченный код привязки' 
-            });
-        }
-        
-        const existingUser = db.prepare("SELECT email FROM users WHERE telegram_chat_id = ?").get(telegram_chat_id);
+        // Проверяем, не занят ли telegram_chat_id
+        const existingUser = db.prepare(`
+            SELECT email FROM users 
+            WHERE telegram_chat_id = ?
+        `).get(telegram_chat_id);
         
         if (existingUser) {
             return res.status(400).json({ 
                 success: false, 
-                error: 'Этот Telegram уже привязан к другому аккаунту' 
+                error: `Этот Telegram уже привязан к аккаунту: ${existingUser.email}`
             });
         }
         
+        // Проверяем, нет ли уже такого email в основной базе
+        const emailExists = db.prepare("SELECT id FROM users WHERE email = ?").get(pendingUser.email);
+        if (emailExists) {
+            // Удаляем временную запись
+            db.prepare("DELETE FROM pending_registrations WHERE id = ?").run(pendingUser.id);
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Пользователь с таким email уже существует'
+            });
+        }
+        
+        // Добавляем пользователя в основную базу с привязанным Telegram
+        const stmt = db.prepare(`
+            INSERT INTO users (name, email, password, telegram_chat_id) 
+            VALUES (?, ?, ?, ?)
+        `);
+        const result = stmt.run(
+            pendingUser.name, 
+            pendingUser.email, 
+            pendingUser.password, 
+            telegram_chat_id
+        );
+        
+        // Удаляем временную запись
+        db.prepare("DELETE FROM pending_registrations WHERE id = ?").run(pendingUser.id);
+        
+        console.log('✅ Новый пользователь зарегистрирован и привязан:', pendingUser.email);
+        
+        // Отправляем приветственное сообщение
+        sendTelegramMessage(telegram_chat_id,
+            `✅ Регистрация завершена!\n\n` +
+            `📧 Ваш аккаунт: ${pendingUser.email}\n` +
+            `👤 Имя: ${pendingUser.name}\n\n` +
+            `Теперь вы можете:\n` +
+            `1. Войти на сайт с вашими данными\n` +
+            `2. Восстанавливать пароль через этого бота\n\n` +
+            `Для восстановления пароля:\n` +
+            `1. Нажмите "Забыли пароль?" на сайте\n` +
+            `2. Введите email: ${pendingUser.email}\n` +
+            `3. Код придет сюда автоматически`
+        ).catch(err => {
+            console.error('Ошибка отправки приветственного сообщения:', err);
+        });
+        
+        res.json({ 
+            success: true, 
+            message: 'Регистрация и привязка Telegram завершены!',
+            email: pendingUser.email,
+            name: pendingUser.name,
+            isNewUser: true
+        });
+        
+    } catch (err) {
+        console.error('❌ Ошибка регистрации нового пользователя:', err);
+        throw err;
+    }
+}
+
+// Функция обработки привязки существующего пользователя
+function processExistingUserLink(codeRecord, telegram_chat_id, res) {
+    try {
+        // Проверяем, не привязан ли уже этот telegram_chat_id к ДРУГОМУ пользователю
+        const existingUser = db.prepare(`
+            SELECT email, name FROM users 
+            WHERE telegram_chat_id = ? AND id != ?
+        `).get(telegram_chat_id, codeRecord.user_id);
+        
+        if (existingUser) {
+            return res.status(400).json({ 
+                success: false, 
+                error: `Этот Telegram уже привязан к аккаунту: ${existingUser.email}`
+            });
+        }
+        
+        // Проверяем, не привязан ли у текущего пользователя уже другой Telegram
+        if (codeRecord.current_chat_id && codeRecord.current_chat_id.toString() !== telegram_chat_id.toString()) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'У этого аккаунта уже привязан другой Telegram. Сначала отвяжите его в настройках.'
+            });
+        }
+        
+        // Если у пользователя уже привязан этот chat_id
+        if (codeRecord.current_chat_id && codeRecord.current_chat_id.toString() === telegram_chat_id.toString()) {
+            db.prepare("UPDATE telegram_link_codes SET used = TRUE WHERE id = ?").run(codeRecord.id);
+            
+            console.log('✅ Telegram уже привязан к пользователю:', codeRecord.email);
+            
+            return res.json({ 
+                success: false, 
+                error: 'Telegram уже привязан к этому аккаунту',
+                email: codeRecord.email,
+                name: codeRecord.name
+            });
+        }
+        
+        // Привязываем новый chat_id
         db.prepare("UPDATE users SET telegram_chat_id = ? WHERE id = ?").run(telegram_chat_id, codeRecord.user_id);
         db.prepare("UPDATE telegram_link_codes SET used = TRUE WHERE id = ?").run(codeRecord.id);
         
-        console.log('✅ Telegram привязан к пользователю:', codeRecord.email);
+        console.log('✅ Telegram привязан к существующему пользователю:', codeRecord.email);
         
         sendTelegramMessage(telegram_chat_id,
             `✅ Telegram успешно привязан!\n\n` +
@@ -300,8 +435,58 @@ app.post('/api/auth/confirm-telegram-link', (req, res) => {
             success: true, 
             message: 'Telegram успешно привязан',
             email: codeRecord.email,
-            name: codeRecord.name
+            name: codeRecord.name,
+            isNewUser: false
         });
+    } catch (err) {
+        console.error('❌ Ошибка привязки существующего пользователя:', err);
+        throw err;
+    }
+}
+
+// Подтверждение привязки Telegram
+app.post('/api/auth/confirm-telegram-link', (req, res) => {
+    const { linkCode, telegram_chat_id } = req.body;
+    
+    console.log('🔗 Подтверждение привязки, код:', linkCode, 'chat_id:', telegram_chat_id);
+    
+    if (!linkCode || !telegram_chat_id) {
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Отсутствуют обязательные параметры' 
+        });
+    }
+    
+    try {
+        // Сначала проверяем в таблице pending_registrations (новые пользователи)
+        const pendingUser = db.prepare(`
+            SELECT * FROM pending_registrations 
+            WHERE link_code = ? AND expires_at > datetime('now')
+        `).get(linkCode);
+        
+        if (pendingUser) {
+            // Это новый пользователь из временной регистрации
+            return processNewUserRegistration(pendingUser, telegram_chat_id, res);
+        }
+        
+        // Проверяем в таблице telegram_link_codes (существующие пользователи)
+        const codeRecord = db.prepare(`
+            SELECT tlc.*, u.email, u.name, u.telegram_chat_id as current_chat_id
+            FROM telegram_link_codes tlc 
+            JOIN users u ON tlc.user_id = u.id 
+            WHERE tlc.code = ? AND tlc.used = FALSE AND tlc.expires_at > datetime('now')
+        `).get(linkCode);
+        
+        if (!codeRecord) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Неверный или просроченный код привязки' 
+            });
+        }
+        
+        // Обрабатываем привязку для существующего пользователя
+        return processExistingUserLink(codeRecord, telegram_chat_id, res);
+        
     } catch (err) {
         console.error('❌ Ошибка:', err);
         res.status(500).json({ 
