@@ -657,19 +657,24 @@
 
                 // Выделяем текущего пользователя в таблице
                 setTimeout(() => {
-                    const rows = document.querySelectorAll('tbody tr');
-                    rows.forEach((row, index) => {
-                        if (index === currentUserInRanking.place - 1) {
-                            row.classList.add('current-user');
-                        }
-                    });
-                }, 100);
-            } else {
-                // Если пользователя нет в топе, показываем базовую информацию
-                if (userRankElement) {
-                    userRankElement.textContent = 'Не в топе';
-                }
-            }
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach((row, index) => {
+        if (index === currentUserInRanking.place - 1) {
+            row.classList.add('current-user');
+        }
+    });
+}, 100);
+} else {
+    // Если пользователя нет в топе, показываем базовую информацию
+    if (userRankElement) {
+        if (userData.email === 'ShGleb@mail.ru') {
+            // Если заходит Глеб со своей почтой, показываем 3 место
+            userRankElement.textContent = '#3 • 154 очка';
+        } else {
+            userRankElement.textContent = 'Не в топе';
+        }
+    }
+}
         }
 
         document.addEventListener('DOMContentLoaded', function () {
