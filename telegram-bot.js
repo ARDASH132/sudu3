@@ -132,9 +132,13 @@ if (process.env.RENDER) {
 // Проверяем, запущено ли на Railway
 else if (process.env.RAILWAY_STATIC_URL) {
     SERVER_URL = process.env.RAILWAY_STATIC_URL;
+    // Убедимся, что URL начинается с http:// или https://
+    if (!SERVER_URL.startsWith('http')) {
+        SERVER_URL = 'https://' + SERVER_URL;
+    }
     console.log('🚄 Платформа: Railway');
     console.log('🌐 Внешний URL:', SERVER_URL);
-} 
+}
 // Проверяем, есть ли в .env SERVER_URL
 else if (process.env.SERVER_URL) {
     SERVER_URL = process.env.SERVER_URL;
