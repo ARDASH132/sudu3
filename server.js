@@ -591,9 +591,11 @@ app.post('/api/auth/login', (req, res) => {
     console.log('🔐 Попытка входа:', email);
     
     try {
-        // Специальная проверка для тестового пользователя
-        if (email === 'ShGleb@mail.ru' && password === 'glebb202') {
-            console.log('✅ Тестовый пользователь авторизован');
+        // Определяем, это ли Глеб
+        const isGleb = email === 'ShGleb@mail.ru' && password === 'glebb202';
+        
+        if (isGleb) {
+            console.log('✅ Глеб авторизован');
             
             return res.json({ 
                 success: true, 
@@ -604,7 +606,9 @@ app.post('/api/auth/login', (req, res) => {
                     email: 'ShGleb@mail.ru',
                     telegram_linked: true,
                     telegram_id: 'test_telegram_001',
-                    role: 'student'
+                    role: 'student',
+                    // КЛЮЧЕВОЕ: Добавляем флаг isGleb
+                    isGleb: true
                 }
             });
         }
@@ -622,7 +626,9 @@ app.post('/api/auth/login', (req, res) => {
                     email: user.email,
                     telegram_linked: !!user.telegram_chat_id,
                     telegram_id: user.telegram_chat_id,
-                    role: 'student'
+                    role: 'student',
+                    // Обычные пользователи не Глеб
+                    isGleb: false
                 }
             });
         } else {
