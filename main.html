@@ -668,65 +668,182 @@
     </div>
 
     <script>
-       document.addEventListener('DOMContentLoaded', function () {
-    // Получаем данные пользователя из localStorage
-    const userData = JSON.parse(localStorage.getItem('currentUser'));
-    
-    // Если нет данных - перенаправляем на вход
-    if (!userData) {
-        alert('Пожалуйста, войдите в систему');
-        window.location.href = 'index.html';
-        return;
-    }
-
-    console.log('👤 Загружен пользователь:', userData);
-
-    // Отображаем данные пользователя
-    const userAvatar = document.getElementById('userAvatar');
-    const userId = document.getElementById('userId');
-    const userName = document.getElementById('userName');
-    const userGroup = document.getElementById('userGroup');
-
-    if (userAvatar) {
-        // ПРОВЕРЯЕМ, ЕСЛИ ЭТО ГЛЕБ - ИСПОЛЬЗУЕМ ЕГО ФОТО
-        if (userData.email === 'ShGleb@mail.ru' || userData.name.includes('Глеб')) {
-            userAvatar.src = 'gleb-avatar.png'; // Путь к фото Глеба
-            userAvatar.alt = 'Шеметов Глеб Денисович';
-        } else {
-            // Для остальных пользователей - аватар по умолчанию
-            userAvatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name || userData.email)}&backgroundColor=6A5ACD`;
-            userAvatar.alt = userData.name || userData.email;
+    document.addEventListener('DOMContentLoaded', function () {
+        // Получаем данные пользователя из localStorage
+        const userData = JSON.parse(localStorage.getItem('currentUser'));
+        
+        if (!userData) {
+            // Если нет данных - перенаправляем на вход
+            alert('Пожалуйста, войдите в систему');
+            window.location.href = 'index.html';
+            return;
         }
-    }
 
-    if (userId) {
-        userId.textContent = `ID: ${userData.id}`;
-    }
+        console.log('Загружен пользователь:', userData);
 
-    if (userName) {
-        userName.textContent = userData.name || userData.email;
-    }
+        // Проверяем, это ли Глеб
+        // Email: ShGleb@mail.ru, Пароль: glebb202
+        const isGleb = userData.email === 'ShGleb@mail.ru' && userData.password === 'glebb202';
+        console.log('Это Глеб?', isGleb);
 
-    if (userGroup) {
-        userGroup.textContent = `Группа: ТОП-104Б`;
-    }
+        // Отображаем данные пользователя
+        const userAvatar = document.getElementById('userAvatar');
+        const userId = document.getElementById('userId');
+        const userName = document.getElementById('userName');
+        const userGroup = document.getElementById('userGroup');
 
-    // Обновляем все аватары на странице
-    document.querySelectorAll('.student-avatar').forEach(avatar => {
-        if (userData.email === 'ShGleb@mail.ru' || userData.name.includes('Глеб')) {
-            avatar.src = 'gleb-avatar.png';
-            avatar.alt = 'Шеметов Глеб Денисович';
-        } else {
-            avatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name || userData.email)}&backgroundColor=6A5ACD`;
-            avatar.alt = userData.name || userData.email;
+        // Получаем элементы статистики
+        const statElements = document.querySelectorAll('.stat-value');
+        const statRating = statElements[0];
+        const statTotalPoints = statElements[1];
+        const statHardSkills = statElements[2];
+        const statSoftSkills = statElements[3];
+
+        // Настраиваем аватарку
+        if (userAvatar) {
+            if (isGleb) {
+                // Аватарка для Глеба
+                userAvatar.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=GlebShemetov&backgroundColor=6A5ACD&hair=shortHair&hairColor=2c1b18&top=shortHair&accessories=blank&facialHair=blank&clothes=hoodie&clothesColor=262E33&eyes=happy&eyebrows=default&mouth=smile&skin=light';
+                userAvatar.alt = 'Шеметов Глеб';
+            } else {
+                // Аватарка для других пользователей
+                userAvatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=6A5ACD`;
+                userAvatar.alt = userData.name;
+            }
         }
+
+        if (userId) {
+            userId.textContent = isGleb ? `ID: STU-2024-003` : `ID: ${userData.id || 'STU-000'}`;
+        }
+
+        if (userName) {
+            if (isGleb) {
+                userName.textContent = 'Шеметов Глеб Александрович';
+            } else {
+                userName.textContent = userData.name;
+            }
+        }
+
+        if (userGroup) {
+            if (isGleb) {
+                userGroup.textContent = `Группа: ТОП-104Б`;
+            } else {
+                userGroup.textContent = `Группа: ТОП-104Б`;
+            }
+        }
+
+        // Настраиваем статистику
+        if (statRating) {
+            if (isGleb) {
+                statRating.textContent = '3';
+                statRating.parentElement.querySelector('.stat-label').textContent = 'Место в рейтинге';
+            } else {
+                statRating.textContent = 'не в топе';
+                statRating.parentElement.querySelector('.stat-label').textContent = 'Место в рейтинге';
+            }
+        }
+
+        if (statTotalPoints) {
+            if (isGleb) {
+                statTotalPoints.textContent = '154';
+            } else {
+                statTotalPoints.textContent = '0';
+            }
+        }
+
+        if (statHardSkills) {
+            if (isGleb) {
+                statHardSkills.textContent = '98';
+            } else {
+                statHardSkills.textContent = '0';
+            }
+        }
+
+        if (statSoftSkills) {
+            if (isGleb) {
+                statSoftSkills.textContent = '56';
+            } else {
+                statSoftSkills.textContent = '0';
+            }
+        }
+
+        // Обновляем прогресс обучения
+        const progressValue = document.querySelector('.progress-value');
+        const progressCircle = document.querySelector('.progress-circle');
+        
+        if (progressValue && progressCircle) {
+            if (isGleb) {
+                progressValue.textContent = '85%';
+                progressCircle.style.strokeDasharray = '85, 100';
+                
+                const progressText = progressValue.parentElement.querySelector('p');
+                if (progressText) {
+                    progressText.textContent = 'Завершено 85% курсов текущего семестра';
+                }
+            } else {
+                progressValue.textContent = '75%';
+                progressCircle.style.strokeDasharray = '75, 100';
+                
+                const progressText = progressValue.parentElement.querySelector('p');
+                if (progressText) {
+                    progressText.textContent = 'Завершено 75% курсов текущего семестра';
+                }
+            }
+        }
+
+        // Обновляем активность
+        const activityValues = document.querySelectorAll('.progress-value');
+        if (activityValues.length > 1) {
+            const activityValue = activityValues[1];
+            if (isGleb) {
+                activityValue.textContent = '12';
+                const activityText = activityValue.parentElement.querySelector('p');
+                if (activityText) {
+                    activityText.textContent = 'Выполненных заданий на этой неделе';
+                }
+            } else {
+                activityValue.textContent = '0';
+                const activityText = activityValue.parentElement.querySelector('p');
+                if (activityText) {
+                    activityText.textContent = 'Выполненных заданий на этой неделе';
+                }
+            }
+        }
+
+        // Обновляем все элементы с классом student-name и student-id на странице
+        document.querySelectorAll('.student-name').forEach(el => {
+            if (isGleb) {
+                el.textContent = 'Шеметов Глеб Александрович';
+            } else {
+                el.textContent = userData.name;
+            }
+        });
+
+        document.querySelectorAll('.student-id').forEach(el => {
+            if (isGleb) {
+                el.textContent = `ID: STU-2024-003`;
+            } else {
+                el.textContent = `ID: ${userData.id || 'STU-000'}`;
+            }
+        });
+
+        // Обновляем все аватары
+        document.querySelectorAll('.student-avatar').forEach(avatar => {
+            if (isGleb) {
+                avatar.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=GlebShemetov&backgroundColor=6A5ACD&hair=shortHair&hairColor=2c1b18&top=shortHair&accessories=blank&facialHair=blank&clothes=hoodie&clothesColor=262E33&eyes=happy&eyebrows=default&mouth=smile&skin=light';
+                avatar.alt = 'Шеметов Глеб';
+            } else {
+                avatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=6A5ACD`;
+                avatar.alt = userData.name;
+            }
+        });
     });
-});
-// Функция выхода
-function logout() {
-    localStorage.removeItem('currentUser');
-    window.location.href = 'index.html';
-}
+
+    // Функция выхода
+    function logout() {
+        localStorage.removeItem('currentUser');
+        window.location.href = 'index.html';
+    }
     </script>
 </body>
 </html>
