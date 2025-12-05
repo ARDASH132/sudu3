@@ -668,63 +668,64 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Получаем данные пользователя из localStorage
-            const userData = JSON.parse(localStorage.getItem('currentUser'));
-            
-            if (!userData) {
-                // Если нет данных - перенаправляем на вход
-                alert('Пожалуйста, войдите в систему');
-                window.location.href = 'index.html';
-                return;
-            }
+       document.addEventListener('DOMContentLoaded', function () {
+    // Получаем данные пользователя из localStorage
+    const userData = JSON.parse(localStorage.getItem('currentUser'));
+    
+    // Если нет данных - перенаправляем на вход
+    if (!userData) {
+        alert('Пожалуйста, войдите в систему');
+        window.location.href = 'index.html';
+        return;
+    }
 
-            console.log('Загружен пользователь:', userData);
+    console.log('👤 Загружен пользователь:', userData);
 
-            // Отображаем данные пользователя
-            const userAvatar = document.getElementById('userAvatar');
-            const userId = document.getElementById('userId');
-            const userName = document.getElementById('userName');
-            const userGroup = document.getElementById('userGroup');
+    // Отображаем данные пользователя
+    const userAvatar = document.getElementById('userAvatar');
+    const userId = document.getElementById('userId');
+    const userName = document.getElementById('userName');
+    const userGroup = document.getElementById('userGroup');
 
-            if (userAvatar) {
-                userAvatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=6A5ACD`;
-                userAvatar.alt = userData.name;
-            }
+    if (userAvatar) {
+        // Генерируем аватар на основе имени
+        userAvatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name || userData.email)}&backgroundColor=6A5ACD`;
+        userAvatar.alt = userData.name || userData.email;
+    }
 
-            if (userId) {
-                userId.textContent = `ID: ${userData.id}`;
-            }
+    if (userId) {
+        userId.textContent = `ID: ${userData.id}`;
+    }
 
-            if (userName) {
-                userName.textContent = userData.name;
-            }
+    if (userName) {
+        userName.textContent = userData.name || userData.email;
+    }
 
-            if (userGroup) {
-                userGroup.textContent = `Группа: ТОП-104Б`;
-            }
+    if (userGroup) {
+        userGroup.textContent = `Группа: ТОП-104Б`;
+    }
 
-            // Обновляем все элементы с классом student-name и student-id на странице
-            document.querySelectorAll('.student-name').forEach(el => {
-                el.textContent = userData.name;
-            });
+    // Обновляем все элементы с классом student-name и student-id на странице
+    document.querySelectorAll('.student-name').forEach(el => {
+        el.textContent = userData.name || userData.email;
+    });
 
-            document.querySelectorAll('.student-id').forEach(el => {
-                el.textContent = `ID: ${userData.id}`;
-            });
+    document.querySelectorAll('.student-id').forEach(el => {
+        el.textContent = `ID: ${userData.id}`;
+    });
 
-            // Обновляем все аватары
-            document.querySelectorAll('.student-avatar').forEach(avatar => {
-                avatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name)}&backgroundColor=6A5ACD`;
-                avatar.alt = userData.name;
-            });
-        });
+    // Обновляем все аватары
+    document.querySelectorAll('.student-avatar').forEach(avatar => {
+        avatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name || userData.email)}&backgroundColor=6A5ACD`;
+        avatar.alt = userData.name || userData.email;
+    });
+});
 
-        // Функция выхода
-        function logout() {
-            localStorage.removeItem('currentUser');
-            window.location.href = 'index.html';
-        }
+// Функция выхода
+function logout() {
+    localStorage.removeItem('currentUser');
+    window.location.href = 'index.html';
+}
     </script>
 </body>
 </html>

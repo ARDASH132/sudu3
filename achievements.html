@@ -13,9 +13,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        body 
-        <?php include 'auth-panel.php'; ?>
-        {
+        body {
             background: linear-gradient(135deg, #f8f7ff 0%, #ffffff 50%, #f0eeff 100%);
             color: #333;
             min-height: 100vh;
@@ -52,14 +50,18 @@
             flex-direction: column;
         }
 
-
-        .header {
+        /* Верхняя навигационная панель */
+        .top-nav {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 247, 255, 0.9));
+            padding: 1.2rem 2rem;
+            border-radius: 20px;
+            border: 2px solid rgba(106, 90, 205, 0.1);
+            box-shadow: 0 8px 25px rgba(106, 90, 205, 0.15);
             margin-bottom: 2rem;
             position: relative;
-            padding: 0 3rem;
         }
 
         .back-button {
@@ -76,71 +78,46 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 2;
         }
 
         .back-button:hover {
             background: linear-gradient(135deg, #8A2BE2, #6A5ACD);
-            transform: translateY(-53%);
+            transform: translateY(-3px);
             box-shadow: 0 6px 20px rgba(106, 90, 205, 0.4);
         }
 
-        .header h1 {
-            font-size: 2.5rem;
+        .nav-title {
+            font-size: 2rem;
             background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             text-shadow: 0 2px 4px rgba(106, 90, 205, 0.1);
+            font-weight: 700;
         }
 
-        .points-section {
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
+        .nav-buttons {
             display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 0.8rem;
+            gap: 1rem;
         }
 
-        .points-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #6A5ACD;
-            text-align: right;
-        }
-
-        .download-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .download-button {
+        .nav-button {
             background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
             color: white;
             border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 10px;
-            font-size: 0.9rem;
+            padding: 0.8rem 1.5rem;
+            border-radius: 15px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 3px 10px rgba(106, 90, 205, 0.3);
-            text-align: center;
-            white-space: nowrap;
+            box-shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
         }
 
-        .download-button:hover {
+        .nav-button:hover {
             background: linear-gradient(135deg, #8A2BE2, #6A5ACD);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(106, 90, 205, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(106, 90, 205, 0.4);
         }
 
         .main-content {
@@ -151,47 +128,12 @@
             gap: 2rem;
         }
 
-
         .achievements-container {
             display: flex;
             flex-direction: column;
             width: 100%;
             max-width: 900px;
             gap: 2rem;
-        }
-
-        .achievements-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .tab-button {
-            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 15px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(106, 90, 205, 0.3);
-            flex: 1;
-            max-width: 200px;
-            text-align: center;
-        }
-
-        .tab-button:hover {
-            background: linear-gradient(135deg, #8A2BE2, #6A5ACD);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(106, 90, 205, 0.4);
-        }
-
-        .tab-button.active {
-            background: linear-gradient(135deg, #8A2BE2, #6A5ACD);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5), 0 8px 20px rgba(106, 90, 205, 0.4);
         }
 
         .achievements-section {
@@ -222,7 +164,6 @@
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 1.5rem;
         }
-
 
         .achievement-card.completed {
             background: white;
@@ -286,7 +227,6 @@
             color: #FF8E53;
         }
 
-
         .achievement-card.not-completed {
             background: #f5f5f5;
             border-radius: 15px;
@@ -334,6 +274,54 @@
             color: #bbb;
         }
 
+        /* Секция загрузки внизу */
+        .download-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 247, 255, 0.9));
+            padding: 2rem;
+            border-radius: 20px;
+            border: 2px solid rgba(106, 90, 205, 0.1);
+            box-shadow: 0 8px 25px rgba(106, 90, 205, 0.15);
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .download-section h3 {
+            color: #6A5ACD;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .download-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .download-button {
+            background: linear-gradient(135deg, #6A5ACD, #8A2BE2);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(106, 90, 205, 0.3);
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            min-width: 200px;
+        }
+
+        .download-button:hover {
+            background: linear-gradient(135deg, #8A2BE2, #6A5ACD);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(106, 90, 205, 0.4);
+            color: white;
+        }
 
         .floating-element {
             position: absolute;
@@ -342,7 +330,6 @@
         }
 
         @keyframes float {
-
             0%,
             100% {
                 transform: translateY(0px) rotate(0deg);
@@ -394,62 +381,26 @@
                 padding: 1.5rem;
             }
 
-            .header {
+            .top-nav {
                 flex-direction: column;
                 gap: 1rem;
-                padding: 0;
-                margin-bottom: 1.5rem;
+                padding: 1.5rem;
+            }
+
+            .nav-title {
+                font-size: 1.8rem;
+                order: 1;
             }
 
             .back-button {
-                position: static;
-                transform: none;
                 align-self: flex-start;
-                margin-bottom: 0.5rem;
+                order: 0;
             }
 
-            .back-button:hover {
-                transform: translateY(-3px);
-            }
-
-            .header h1 {
-                font-size: 2rem;
-                align-self: center;
+            .nav-buttons {
+                order: 2;
                 width: 100%;
-                text-align: center;
-            }
-
-            .points-section {
-                position: static;
-                transform: none;
-                align-items: center;
-                margin-top: 1rem;
-                width: 100%;
-            }
-
-            .points-title {
-                text-align: center;
-            }
-
-            .download-buttons {
-                flex-direction: row;
                 justify-content: center;
-                width: 100%;
-            }
-
-            .download-button {
-                flex: 1;
-                max-width: 200px;
-            }
-
-            .achievements-tabs {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .tab-button {
-                width: 100%;
-                max-width: 300px;
             }
 
             .achievements-grid {
@@ -460,14 +411,24 @@
                 padding: 1.5rem;
             }
 
+            .download-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .download-button {
+                width: 100%;
+                max-width: 300px;
+            }
+
             .floating-element {
                 display: none;
             }
         }
 
         @media (max-width: 480px) {
-            .header h1 {
-                font-size: 1.8rem;
+            .nav-title {
+                font-size: 1.5rem;
             }
 
             .achievements-section {
@@ -478,12 +439,8 @@
                 padding: 1.2rem;
             }
 
-            .download-buttons {
-                flex-direction: column;
-            }
-
             .download-button {
-                max-width: 100%;
+                padding: 0.8rem 1.5rem;
             }
         }
     </style>
@@ -498,38 +455,25 @@
     <div class="floating-element floating-3"></div>
 
     <div class="container">
-
-        <div class="header">
+        <!-- Верхняя навигационная панель -->
+        <div class="top-nav">
             <button class="back-button" onclick="goBack()">← Назад</button>
-            <h1>Достижения</h1>
-            <div class="points-section">
-                <div class="points-title">Оценка баллов</div>
-                <div class="download-buttons">
-                    <button class="download-button"><a href='https://disk.yandex.ru/i/PozpJBbjKtt9og'
-                            style="text-decoration: none; color: inherit;">Скачать сводку Hard Skills</a></button>
-                    <button class="download-button"><a href='https://disk.yandex.ru/i/EJPCSRChh8_fYw'
-                            style="text-decoration: none; color: inherit;">Скачать сводку Soft Skills</a></button>
-
-                </div>
+            <div class="nav-title">Достижения</div>
+            <div class="nav-buttons">
+                <button class="nav-button" data-tab="hard-skills">Hard Skills</button>
+                <button class="nav-button" data-tab="soft-skills">Soft Skills</button>
             </div>
         </div>
 
-
         <div class="main-content">
             <div class="achievements-container">
-                <div class="achievements-tabs">
-                    <button class="tab-button active" data-tab="hard-skills">Hard Skills</button>
-                    <button class="tab-button" data-tab="soft-skills">Soft Skills</button>
-                </div>
-
                 <div class="achievements-section active" id="hard-skills">
                     <h2>Hard Skills</h2>
                     <div class="achievements-grid">
                         <div class="achievement-card completed">
                             <div class="achievement-icon">🏆</div>
                             <div class="achievement-title">Чемпион международной олимпиады</div>
-                            <div class="achievement-description">Диплом победителя/призера международной олимпиады по
-                                программированию</div>
+                            <div class="achievement-description">Диплом победителя/призера международной олимпиады по программированию</div>
                             <div class="achievement-points">⭐ 50 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -537,8 +481,7 @@
                         <div class="achievement-card completed">
                             <div class="achievement-icon">🌍</div>
                             <div class="achievement-title">Участник международной олимпиады</div>
-                            <div class="achievement-description">Сертификат участника международной олимпиады по
-                                программированию</div>
+                            <div class="achievement-description">Сертификат участника международной олимпиады по программированию</div>
                             <div class="achievement-points">⭐ 5 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -546,8 +489,7 @@
                         <div class="achievement-card completed">
                             <div class="achievement-icon">🥇</div>
                             <div class="achievement-title">Победитель всероссийской олимпиады</div>
-                            <div class="achievement-description">Диплом победителя/призера всероссийской олимпиады по
-                                программированию</div>
+                            <div class="achievement-description">Диплом победителя/призера всероссийской олимпиады по программированию</div>
                             <div class="achievement-points">⭐ 30 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -555,8 +497,7 @@
                         <div class="achievement-card completed">
                             <div class="achievement-icon">📄</div>
                             <div class="achievement-title">Участник всероссийской олимпиады</div>
-                            <div class="achievement-description">Сертификат участника всероссийской олимпиады по
-                                программированию</div>
+                            <div class="achievement-description">Сертификат участника всероссийской олимпиады по программированию</div>
                             <div class="achievement-points">⭐ 3 очка</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -565,8 +506,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🏅</div>
                             <div class="achievement-title">Призер региональной олимпиады</div>
-                            <div class="achievement-description">Диплом победителя/призера региональной олимпиады по
-                                программированию</div>
+                            <div class="achievement-description">Диплом победителя/призера региональной олимпиады по программированию</div>
                             <div class="achievement-points">⭐ 15 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -574,8 +514,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🎯</div>
                             <div class="achievement-title">Победитель муниципальной олимпиады</div>
-                            <div class="achievement-description">Диплом победителя/призера муниципальной олимпиады по
-                                программированию</div>
+                            <div class="achievement-description">Диплом победителя/призера муниципальной олимпиады по программированию</div>
                             <div class="achievement-points">⭐ 8 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -583,8 +522,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">💻</div>
                             <div class="achievement-title">Победитель международного хакатона</div>
-                            <div class="achievement-description">1 место на международном хакатоне с завершенным
-                                проектом</div>
+                            <div class="achievement-description">1 место на международном хакатоне с завершенным проектом</div>
                             <div class="achievement-points">⭐ 45 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -592,8 +530,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🚀</div>
                             <div class="achievement-title">Призер всероссийского хакатона</div>
-                            <div class="achievement-description">2-3 место на всероссийском хакатоне с завершенным
-                                проектом</div>
+                            <div class="achievement-description">2-3 место на всероссийском хакатоне с завершенным проектом</div>
                             <div class="achievement-points">⭐ 20 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -601,8 +538,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">⭐</div>
                             <div class="achievement-title">Участник хакатона</div>
-                            <div class="achievement-description">Завершенный проект на хакатоне международного уровня
-                            </div>
+                            <div class="achievement-description">Завершенный проект на хакатоне международного уровня</div>
                             <div class="achievement-points">⭐ 10 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -610,8 +546,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🔬</div>
                             <div class="achievement-title">Доклад на международной конференции</div>
-                            <div class="achievement-description">Диплом победителя/призера международной
-                                научно-практической конференции</div>
+                            <div class="achievement-description">Диплом победителя/призера международной научно-практической конференции</div>
                             <div class="achievement-points">⭐ 25 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -619,8 +554,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">📊</div>
                             <div class="achievement-title">Публикация в сборнике конференции</div>
-                            <div class="achievement-description">Публикация тезисов в сборнике международной конференции
-                            </div>
+                            <div class="achievement-description">Публикация тезисов в сборнике международной конференции</div>
                             <div class="achievement-points">⭐ 10 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -628,8 +562,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🎓</div>
                             <div class="achievement-title">Выпускник "Код будущего"</div>
-                            <div class="achievement-description">Сертификат о завершении полного курса программы "Код
-                                будущего"</div>
+                            <div class="achievement-description">Сертификат о завершении полного курса программы "Код будущего"</div>
                             <div class="achievement-points">⭐ 25 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -637,8 +570,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🧩</div>
                             <div class="achievement-title">Обучение в IT-куб</div>
-                            <div class="achievement-description">Сертификат о завершении обучения в центре "IT-куб"
-                            </div>
+                            <div class="achievement-description">Сертификат о завершении обучения в центре "IT-куб"</div>
                             <div class="achievement-points">⭐ 20 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -647,8 +579,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">📚</div>
                             <div class="achievement-title">Профессиональный сертификат Coursera</div>
-                            <div class="achievement-description">Сертификат о прохождении профессионального курса
-                                продолжительностью 6+ месяцев</div>
+                            <div class="achievement-description">Сертификат о прохождении профессионального курса продолжительностью 6+ месяцев</div>
                             <div class="achievement-points">⭐ 20 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -656,8 +587,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🐍</div>
                             <div class="achievement-title">Сертификат Stepik</div>
-                            <div class="achievement-description">Сертификат о прохождении продвинутого курса по
-                                алгоритмам или машинному обучению</div>
+                            <div class="achievement-description">Сертификат о прохождении продвинутого курса по алгоритмам или машинному обучению</div>
                             <div class="achievement-points">⭐ 15 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -666,8 +596,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🔶</div>
                             <div class="achievement-title">Выпускник Яндекс.Лицея</div>
-                            <div class="achievement-description">Сертификат о завершении полной программы Яндекс.Лицея
-                            </div>
+                            <div class="achievement-description">Сертификат о завершении полной программы Яндекс.Лицея</div>
                             <div class="achievement-points">⭐ 30 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -675,8 +604,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🏫</div>
                             <div class="achievement-title">Школа 21 (S21)</div>
-                            <div class="achievement-description">Обучение в школе 21 с подтвержденными достижениями
-                            </div>
+                            <div class="achievement-description">Обучение в школе 21 с подтвержденными достижениями</div>
                             <div class="achievement-points">⭐ 35 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -685,8 +613,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">💾</div>
                             <div class="achievement-title">Сложный IT-проект</div>
-                            <div class="achievement-description">Завершенный сложный проект (веб-приложение, мобильное
-                                приложение)</div>
+                            <div class="achievement-description">Завершенный сложный проект (веб-приложение, мобильное приложение)</div>
                             <div class="achievement-points">⭐ 20 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -694,8 +621,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">⭐</div>
                             <div class="achievement-title">Популярный GitHub проект</div>
-                            <div class="achievement-description">Проект с открытым исходным кодом на GitHub (50+ stars)
-                            </div>
+                            <div class="achievement-description">Проект с открытым исходным кодом на GitHub (50+ stars)</div>
                             <div class="achievement-points">⭐ 15 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -703,8 +629,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🔧</div>
                             <div class="achievement-title">Open-source контрибьютор</div>
-                            <div class="achievement-description">Участие в open-source проекте (merged PR в известные
-                                проекты)</div>
+                            <div class="achievement-description">Участие в open-source проекте (merged PR в известные проекты)</div>
                             <div class="achievement-points">⭐ 25 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -728,8 +653,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">💼</div>
                             <div class="achievement-title">Стажировка в IT-компании</div>
-                            <div class="achievement-description">Подтвержденная стажировка в IT-компании с рекомендацией
-                            </div>
+                            <div class="achievement-description">Подтвержденная стажировка в IT-компании с рекомендацией</div>
                             <div class="achievement-points">⭐ 25 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -737,8 +661,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🏢</div>
                             <div class="achievement-title">Коммерческий проект</div>
-                            <div class="achievement-description">Работа над реальными коммерческими проектами с
-                                подтверждением</div>
+                            <div class="achievement-description">Работа над реальными коммерческими проектами с подтверждением</div>
                             <div class="achievement-points">⭐ 20 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -746,8 +669,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">👨‍🏫</div>
                             <div class="achievement-title">IT-преподаватель</div>
-                            <div class="achievement-description">Проведение мастер-классов/воркшопов по программированию
-                            </div>
+                            <div class="achievement-description">Проведение мастер-классов/воркшопов по программированию</div>
                             <div class="achievement-points">⭐ 10 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -755,8 +677,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🤝</div>
                             <div class="achievement-title">IT-волонтер</div>
-                            <div class="achievement-description">Волонтерство в IT-образовании с подтверждающими
-                                документами</div>
+                            <div class="achievement-description">Волонтерство в IT-образовании с подтверждающими документами</div>
                             <div class="achievement-points">⭐ 12 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -766,7 +687,6 @@
                 <div class="achievements-section" id="soft-skills">
                     <h2>Soft Skills</h2>
                     <div class="achievements-grid">
-
                         <div class="achievement-card completed">
                             <div class="achievement-icon">📊</div>
                             <div class="achievement-title">Долгосрочный проект</div>
@@ -794,8 +714,7 @@
                         <div class="achievement-card completed">
                             <div class="achievement-icon">🏆</div>
                             <div class="achievement-title">Чемпион турнира</div>
-                            <div class="achievement-description">1 место в спортивном турнире (футбол, волейбол,
-                                баскетбол)</div>
+                            <div class="achievement-description">1 место в спортивном турнире (футбол, волейбол, баскетбол)</div>
                             <div class="achievement-points">⭐ 8 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -827,8 +746,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">♟️</div>
                             <div class="achievement-title">Интеллектуальный спорт</div>
-                            <div class="achievement-description">Участие в шахматах, теннисе или других одиночных видах
-                            </div>
+                            <div class="achievement-description">Участие в шахматах, теннисе или других одиночных видах</div>
                             <div class="achievement-points">⭐ 2 очка</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -869,8 +787,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">🛠️</div>
                             <div class="achievement-title">Участник мастер-класса</div>
-                            <div class="achievement-description">Посещение мастер-класса продолжительностью 1-2 часа
-                            </div>
+                            <div class="achievement-description">Посещение мастер-класса продолжительностью 1-2 часа</div>
                             <div class="achievement-points">⭐ 2 очка</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -886,8 +803,7 @@
                         <div class="achievement-card not-completed">
                             <div class="achievement-icon">👨‍🏫</div>
                             <div class="achievement-title">Проводник знаний</div>
-                            <div class="achievement-description">Проведение мастер-класса для участников сообщества
-                            </div>
+                            <div class="achievement-description">Проведение мастер-класса для участников сообщества</div>
                             <div class="achievement-points">⭐ 8 очков</div>
                             <div class="achievement-status">Не выполнено</div>
                         </div>
@@ -1079,6 +995,15 @@
                 </div>
             </div>
         </div>
+
+        <!-- Секция загрузки внизу страницы -->
+        <div class="download-section">
+            <h3>Оценка баллов</h3>
+            <div class="download-buttons">
+                <a href='https://disk.yandex.ru/i/PozpJBbjKtt9og' class="download-button">Скачать сводку Hard Skills</a>
+                <a href='https://disk.yandex.ru/i/EJPCSRChh8_fYw' class="download-button">Скачать сводку Soft Skills</a>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1087,16 +1012,13 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            const tabButtons = document.querySelectorAll('.tab-button');
+            const navButtons = document.querySelectorAll('.nav-button');
             const achievementSections = document.querySelectorAll('.achievements-section');
 
-            tabButtons.forEach(button => {
+            // Обработчики для кнопок навигации
+            navButtons.forEach(button => {
                 button.addEventListener('click', function () {
-
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
                     achievementSections.forEach(section => section.classList.remove('active'));
-
-                    this.classList.add('active');
 
                     const tabId = this.getAttribute('data-tab');
                     document.getElementById(tabId).classList.add('active');
