@@ -688,9 +688,15 @@
     const userGroup = document.getElementById('userGroup');
 
     if (userAvatar) {
-        // Генерируем аватар на основе имени
-        userAvatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name || userData.email)}&backgroundColor=6A5ACD`;
-        userAvatar.alt = userData.name || userData.email;
+        // ПРОВЕРЯЕМ, ЕСЛИ ЭТО ГЛЕБ - ИСПОЛЬЗУЕМ ЕГО ФОТО
+        if (userData.email === 'ShGleb@mail.ru' || userData.name.includes('Глеб')) {
+            userAvatar.src = 'gleb-avatar.png'; // Путь к фото Глеба
+            userAvatar.alt = 'Шеметов Глеб Денисович';
+        } else {
+            // Для остальных пользователей - аватар по умолчанию
+            userAvatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name || userData.email)}&backgroundColor=6A5ACD`;
+            userAvatar.alt = userData.name || userData.email;
+        }
     }
 
     if (userId) {
@@ -705,22 +711,17 @@
         userGroup.textContent = `Группа: ТОП-104Б`;
     }
 
-    // Обновляем все элементы с классом student-name и student-id на странице
-    document.querySelectorAll('.student-name').forEach(el => {
-        el.textContent = userData.name || userData.email;
-    });
-
-    document.querySelectorAll('.student-id').forEach(el => {
-        el.textContent = `ID: ${userData.id}`;
-    });
-
-    // Обновляем все аватары
+    // Обновляем все аватары на странице
     document.querySelectorAll('.student-avatar').forEach(avatar => {
-        avatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name || userData.email)}&backgroundColor=6A5ACD`;
-        avatar.alt = userData.name || userData.email;
+        if (userData.email === 'ShGleb@mail.ru' || userData.name.includes('Глеб')) {
+            avatar.src = 'gleb-avatar.png';
+            avatar.alt = 'Шеметов Глеб Денисович';
+        } else {
+            avatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name || userData.email)}&backgroundColor=6A5ACD`;
+            avatar.alt = userData.name || userData.email;
+        }
     });
 });
-
 // Функция выхода
 function logout() {
     localStorage.removeItem('currentUser');
