@@ -717,7 +717,7 @@
 
         if (userName) {
             if (isGleb) {
-                userName.textContent = 'Шеметов Глеб Александрович';
+                userName.textContent = 'Шеметов Глеб Денисович';
             } else {
                 userName.textContent = userData.name || 'Пользователь';
             }
@@ -772,7 +772,7 @@
 
         // Обновляем все элементы с классом student-name и student-id на странице
         document.querySelectorAll('.student-name').forEach(el => {
-            el.textContent = isGleb ? 'Шеметов Глеб Александрович' : (userData.name || 'Пользователь');
+            el.textContent = isGleb ? 'Шеметов Глеб Денисович' : (userData.name || 'Пользователь');
         });
 
         document.querySelectorAll('.student-id').forEach(el => {
