@@ -783,7 +783,7 @@
        document.querySelectorAll('.student-avatar').forEach(avatar => {
     if (isGleb) {
         // Используем тот же аватар, что и в рейтинге
-        avatar.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=GlebShemetov&backgroundColor=6A5ACD&hair=shortHair&hairColor=2c1b18&top=shortHair&accessories=blank&facialHair=blank&clothes=hoodie&clothesColor=262E33&eyes=happy&eyebrows=default&mouth=smile&skin=light';
+        avatar.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Шеметов&backgroundColor=6A5ACD&radius=50';
         avatar.alt = 'Шеметов Глеб';
     } else {
         avatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userData.name || 'User')}&backgroundColor=6A5ACD`;
